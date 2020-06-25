@@ -10,6 +10,72 @@ label {
 	font-family: $main-fonts;
 	float: left;
 }
+
+button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disabled), [type="submit"]:not(:disabled) {
+    cursor: pointer;
+    outline: none;
+}
+
+.form-add-button{
+    height: 30px;
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+    margin-bottom: 10px !important;
+}
+.form-add{
+    span{
+        cursor: pointer;
+        font-weight: 600;
+        color: #04a9f5;
+    }
+}
+.form-add::before {
+    content: "+";
+    height: 20px;
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 50%;
+    background-color: #04a9f5;
+    color: #fff;
+    margin-right: 10px;
+}
+
+.form-upload-button{
+    cursor: pointer;
+    text-align: center;
+    border-radius: 4px;
+    box-shadow: none;
+    padding: .65rem 1rem;
+    display: inline-block;
+    background: #fff;
+    color: #4e4e91;
+    border: 1px solid #4e4e91;
+    margin: 0;
+}
+
+.form-header-text{
+    color: #004;
+    font-family: Noto Sans,Tahoma,sans-serif;
+    font-size: 19px;
+}
+.form-header-container{
+    border-bottom:  1px solid #c5c5c5;
+}
+    
+
+.form-details{
+    label {
+        color: #4e4e91;
+        cursor: pointer;
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    h4 {
+        color: #4e4e91;
+    }
+}
+
 .form-control,
 select {
     display: block;
@@ -18,7 +84,7 @@ select {
     font-size: 16px;
     line-height: 1.42857143;
     color: #444;
-    background-color: $white;
+    background-color: $white !important;
     background-image: none;
     border: 1px solid #ddd;
     border-radius: 10px;
@@ -34,7 +100,7 @@ select {
         -webkit-box-shadow: transparent;
         box-shadow: transparent;
     }
-    
+       
 }
 .form-control {
 	&::-webkit-input-placeholder {

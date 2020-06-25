@@ -16,7 +16,7 @@ const Login = (props) => {
   const dispatch = useDispatch();
 
   const params = useParams();
-
+  const [display, setDisplay] = useState(false);
   const [spinner, setSpinner] = useState(false);
 
   const [state, setState] = useState({
@@ -31,6 +31,7 @@ const Login = (props) => {
 
   const handleChange = (e) => {
     e.persist();
+    setDisplay(false)
     const { name, value } = e.target;
     setState((st) => ({ ...st, [name]: value }));
     var err = errors;
@@ -60,7 +61,8 @@ const Login = (props) => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    setSpinner(true);
+    if(!display){
+      setSpinner(true);
     const validateForm = (error) => {
       let valid = true;
       Object.values(error).forEach((val) => val.length > 0 && (valid = false));
@@ -70,15 +72,18 @@ const Login = (props) => {
       checkValidity();
     } else {
       setSpinner(false);
+      setDisplay(true)
       return notification.warning({
         message: "Failed to Register.",
       });
+    }
     }
   };
 
   const checkValidity = () => {
     if (state["emailAddress"] === "" || state["password"] === "") {
       setSpinner(false);
+      setDisplay(true)
       return notification.warning({
         message: "Fields Should Not Be Empty",
       });
@@ -86,6 +91,7 @@ const Login = (props) => {
       dispatch(
         loginUser({ ...state, type: "user" }, (err, response) => {
           if (err) {
+            setDisplay(true)
             notification.error(err);
           } else {
             notification.success(response);
@@ -101,7 +107,7 @@ const Login = (props) => {
       <Navigation />
       <div className="Login">
         <div className="container text-center">
-          <div className="align-content-center form-size py-3 row">
+          <div className="align-content-center py-5 row">
             <div className="col-md-6 offset-md-3">
               <div className="bg-light l-wrapper p-3 p-md-5 shadow">
                 <div className="section-title mb-2">
@@ -188,3 +194,4 @@ const Login = (props) => {
 };
 
 export default Login;
+

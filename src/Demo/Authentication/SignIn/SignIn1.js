@@ -14,8 +14,9 @@ const validEmailRegex = RegExp(
 
 const AdminLogin = (props) => {
   const dispatch = useDispatch();
+  const [Display, setDisplay] = useState(false);
   const [spinner, setSpinner] = useState(false);
-
+  const [checked, setChecked] = useState(true);
   const [state, setState] = useState({});
   const [errors, setErrors] = useState({
     emailAddress: "",
@@ -24,6 +25,7 @@ const AdminLogin = (props) => {
 
   const handleChange = (e) => {
     e.persist();
+    setDisplay(false)
     const { name, value } = e.target;
     setState((st) => ({ ...st, [name]: value }));
     var err = errors;
@@ -45,7 +47,8 @@ const AdminLogin = (props) => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    setSpinner(true);
+    if(!Display){
+      setSpinner(true);
     const validateForm = (error) => {
       let valid = true;
       Object.values(error).forEach((val) => val.length > 0 && (valid = false));
@@ -55,14 +58,17 @@ const AdminLogin = (props) => {
       checkValidity();
     } else {
       setSpinner(false);
+      setDisplay(true)
       return notification.warning({
         message: "Failed to Register.",
       });
+    }
     }
   };
 
   const checkValidity = () => {
     if (state["emailAddress"] === "" || state["password"] === "") {
+      setDisplay(true)
       return notification.warning({
         message: "Fields Should Not Be Empty",
       });
@@ -71,6 +77,7 @@ const AdminLogin = (props) => {
         loginUser({ ...state, type: "admin" }, (err, response) => {
           if (err) {
             notification.error(err);
+            setDisplay(true)
           } else {
             notification.success(response);
           }
@@ -120,28 +127,30 @@ const AdminLogin = (props) => {
                 />
               </div>
               {spinner && <Spin />}
-
+              {/*
               <div className="form-group text-left">
-                <div className="checkbox checkbox-fill d-inline">
-                  <input
-                    type="checkbox"
-                    name="checkbox-fill-1"
-                    id="checkbox-fill-a1"
-                  />
+                  
                   <p className="help-block text-danger">{errors.password}</p>
 
-                  <label htmlFor="checkbox-fill-a1" className="cr">
-                    {" "}
-                    Save credentials
-                  </label>
-                </div>
+                  <label>
+                    Remember me 
+                    <input type="checkbox"
+                    name="checkbox-fill-1"
+                    id="checkbox-fill-a1"
+                      checked={checked}
+                      onChange={() => setChecked(!checked)}
+                    />
+                  </label><br></br>
+               
               </div>
+              */}
               <button
                 onClick={handleLogin}
                 className="btn btn-primary shadow-2 mb-4"
               >
                 Login
               </button>
+              {/*
               <p className="mb-2 text-muted">
                 Forgot password? <NavLink to="/forgot">Reset</NavLink>
               </p>
@@ -149,6 +158,7 @@ const AdminLogin = (props) => {
                 Don’t have an account?{" "}
                 <NavLink to="/admin/register">Signup</NavLink>
               </p>
+              */}
             </div>
           </div>
         </div>
