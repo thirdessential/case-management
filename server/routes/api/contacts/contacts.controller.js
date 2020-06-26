@@ -4,41 +4,38 @@ const Contact = require('../../../models/contacts.js')
 // Create New List
 exports.createContact = (req, res) => {
 
-    let contact = new ContactUs()
-    contact.image:req.body,
-    contact.prefix: req.body,
-    contact.firstName:req.body,
-    contact.middleName:req.body,
-    contact.lastName:req.body,
-    contact.company:req.body,
-    contact.title:req.body,
-    contact.emailAddress:req.body,
-    contact.phone:req.body,
-    contact.websiteType:req.body,
-    contact.Address:req.body,
-    contact.customFields:req.body,
-    contact.billingPaymentProfile:req.body,
-    contact.billingCustomRate:req.body,
-    contact.billingClientId:req.body,
+    let contact = new Contact()
+
+    contact.prefix= req.body.prefix,
+    contact.firstName=req.body.firstName,
+    contact.middleName=req.body.middleName,
+    contact.lastName=req.body.lastName,
+    contact.company=req.body.company,
+    contact.title=req.body.title,
+    contact.emailAddress=req.body.emailAddress,
+    contact.phone=req.body.phone,
+    contact.websiteType=req.body.website,
+    contact.address=req.body.address,
+    contact.customFields=req.body.customFields,
+    contact.billingPaymentProfile=req.body.billingPaymentProfile,
+    contact.billingCustomRate=req.body.billingCustomRate,
+    contact.billingClientId=req.body.billingClientId
  
-
-  
-
-        contactUs.save().then(data => {
-            res.status(200).json({status: true, message:"ContactUs list Saved", data})
+        contact.save().then(data => {
+            res.status(200).json({status: true, message:"Contact list Saved", data})
 
         }).catch(error => {
-        res.status(200).json({status: false, message:error})
+        res.status(400).json({status: false, message:error})
 
         })
 }
 
 //Delete a list
-exports.deleteList = (req, res) => {
+exports.deleteContact = (req, res) => {
 // console.log(req.params.id)
-    ContactUs.findByIdAndRemove(req.params.id).
+    Contact.findByIdAndRemove(req.params.id).
         then(data => {
-            res.status(200).json({status: true, message:"contactUs list Removed", data})
+            res.status(200).json({status: true, message:"contact Removed", data})
 
         }).catch(error => {
         res.status(200).json({status: false, message:error})
@@ -49,9 +46,22 @@ exports.deleteList = (req, res) => {
 //Show all 
 exports.showAll = (req, res) => {
 
-    ContactUs.find({}).
+    Contact.find({}).populate("company").
         then(data => {
-            res.status(200).json({status: true, message:"ContactUs list fetched", data})
+            res.status(200).json({status: true, message:"Contacts fetched", data})
+
+        }).catch(error => {
+        res.status(200).json({status: false, message:error})
+
+        })
+}
+
+//View One
+exports.view = (req, res) => {
+
+    Contact.findById(req.params.id).populate("company").
+        then(data => {
+            res.status(200).json({status: true, message:"Contact fetched", data})
 
         }).catch(error => {
         res.status(200).json({status: false, message:error})
