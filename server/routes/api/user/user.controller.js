@@ -187,3 +187,39 @@ exports.verify = (req, res) => {
             })
              
           }
+
+
+          exports.updateUser = (req, res) => {
+    
+            User.findByIdAndUpdate(req.params.id, req.body, {new:true}).then(data =>
+                
+                {
+        
+                    res.status(200).json({ 'success': true, 'message': 'user Updated', data });
+                }).catch(err =>{
+        
+        
+                        res.status(400).json({ 'success': false, 'message': err });
+                     
+                    
+                })
+                 
+              }
+
+
+          exports.viewUser = (req, res) => {
+    
+            User.findById(req.params.id).then(data =>
+                
+                {
+        
+                    res.status(200).json({ 'success': true, 'message': 'user fetched', data });
+                }).catch(err =>{
+        
+        
+                        res.status(400).json({ 'success': false, 'message': err });
+                     
+                    
+                })
+                 
+              }
