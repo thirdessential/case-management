@@ -10,6 +10,8 @@ const contactus = require("./contactUs")
 const company  = require("./company")
 const contact = require("./contacts")
 const matter = require("./matters")
+const tasks = require("./tasks")
+
 
 router.use('/contactus', contactus)
 router.use('/blogs', blogs)
@@ -21,6 +23,8 @@ router.use('/company', company)
 router.use('/contact', contact)
 // router.use('/user', authMiddleware)
 router.use('/user', user)
+router.use('/tasks', tasks)
+
 
 router.use('/admin', admin)
 
