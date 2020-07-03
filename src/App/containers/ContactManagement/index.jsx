@@ -51,6 +51,7 @@ const ContactsManage = (props) => {
       setTableData(newtableData)
       console.log(tableData)
     }) 
+    setState({tableData : tableData})
   }
   
 
@@ -123,7 +124,8 @@ const ContactsManage = (props) => {
 
   const handleEdit = record => {
     //   dispatch(selectBlog(record))
-      props.history.push('/manage/contacts/edit')
+    console.log(record)
+      props.history.push('/manage/contacts/edit/person', record.key)
   }
   
   const handleDelete = record => {
@@ -180,18 +182,6 @@ const ContactsManage = (props) => {
       )
     },
     {
-        title:'Edit',
-        dataIndex: "edit",
-        key: "_id",
-        render:(_,record)=>{
-            return (
-                <Button color='warning' onClick={()=>handleEdit(record)}>
-                    Edit
-                </Button>
-            )
-        }
-    },
-    {
         title:'Delete',
         dataIndex: "delete",
         key: "_id",
@@ -220,9 +210,9 @@ const ContactsManage = (props) => {
     setState({ searchText: '' });
   };
 
-const handleView = (e)=>{
+const handleView = (i)=>{
   
-      console.log(e)
+      console.log(i)
       /*
       if(type==="Person"){
         props.history.push('/manage/contacts/add/Person')
@@ -230,9 +220,9 @@ const handleView = (e)=>{
         props.history.push('/manage/contacts/add/Company')
       }
       */
-     props.history.push('/view/company')
+     props.history.push('/view/company',i)
   }
-
+ 
   return (
     <div>
       <div className='p-2 '>
@@ -240,10 +230,10 @@ const handleView = (e)=>{
         <Button className='ml-auto' color='success' onClick={()=>handleAddNew("Person")}>Add Person</Button>
         <Button className='ml-auto' color='success' onClick={()=>handleAddNew("Company")}>Add Company</Button>
       </div>
-      <Table dataSource={tableData} columns={columns}
+      <Table dataSource={state.tableData} columns={columns}
         onRow={(record, rowIndex) => {
             return {
-              onDoubleClick: event => handleView(event), // double click row
+              onDoubleClick: () => handleView(rowIndex), // double click row
               onContextMenu: event => {}, // right button click row
               onMouseEnter: event => {}, // mouse enter row
               onMouseLeave: event => {}, // mouse leave row
