@@ -18,6 +18,7 @@ const Matters = new Schema({
    billingRate:String,
    billingType:String,
 task:[{type:Schema.Types.ObjectId, ref:"Tasks"}],
+userId:{type:Schema.Types.ObjectId, ref:"User"}
 
 },schemaOptions)
 
