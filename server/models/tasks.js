@@ -9,7 +9,8 @@ const Tasks = new Schema({
     dueDate:Date,
     description:String,
     priority:String,
-   matter:{type: Schema.Types.ObjectId, ref:"Matters"}
+   matter:{type: Schema.Types.ObjectId, ref:"Matters"},
+userId:{type:Schema.Types.ObjectId, ref:"User"}
 
 },schemaOptions)
 
