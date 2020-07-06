@@ -65,3 +65,16 @@ exports.viewTasks = (req, res) => {
 
         })
 }
+
+//fetch for one user
+exports.viewSpecific = (req, res) => {
+
+    tasks.find({userId:req.params.id}).
+        then(data => {
+            res.status(200).json({status: true, message:"tasks fetched", data})
+
+        }).catch(error => {
+        res.status(200).json({status: false, message:error})
+
+        })
+}
