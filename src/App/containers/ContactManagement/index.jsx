@@ -8,12 +8,16 @@ import { getBlogs, deleteBlog,selectBlog } from "../../../store/Actions";
 import api from '../../../resources/api'
 
 
-
 const ContactsManage = (props) => {
-
+  const userId = useSelector(state=>state.user.token.user._id)
+  const [type , setType] = useState("contact")
+  console.log(userId)
   const dispatch = useDispatch();
-  const [tableData , setTableData] = useState([])
+  const [companyData , setcompanyData] = useState([])
+  const [searchData , setsearchData] = useState([])
+  const [contactData , setcontactData] = useState([])
   let response = {}
+  let company= {}
   //Search Related 
   const [state,setState] = useState({})
   const contacts = useSelector((state) => {
@@ -30,7 +34,10 @@ const ContactsManage = (props) => {
   useEffect(() => {
     
     async function fetchData() {
-      response = await api.get('/contact/showall')
+      response = await api.get('/contact/viewforuser/'+ userId)
+      company = await api.get('/company/viewforuser/'+ userId)
+      console.log(response)
+      console.log(company)
       setTable()
     }
     fetchData();
@@ -41,17 +48,27 @@ const ContactsManage = (props) => {
     response.data.data.map((value,id)=>{
       let key=id
       const data={
-        firstName : value.firstName ,
-        lastName : value.lastName,
+        firstName : value.firstName + " " + value.lastName,
         billingCustomRate : value.billingCustomRate,
-        company : value.company.name
+        emailAddress : value.emailAddress.map((value)=>{return <div>{value}<br></br></div>})
       }
-      let newtableData = tableData
+      let newtableData = contactData
       newtableData.push(data)
-      setTableData(newtableData)
-      console.log(tableData)
+      setcontactData(newtableData)
     }) 
-    setState({tableData : tableData})
+    company.data.data.map((value,id)=>{
+      let key=id
+      const data={
+        firstName : value.name ,
+        billingCustomRate : value.billingCustomRate,
+        emailAddress : value.emailAddress.map((value)=>{return <div>{value}<br></br></div>})
+      }
+      let newtableData = companyData
+      newtableData.push(data)
+      setcompanyData(newtableData)
+    }) 
+    setState({tableData : contactData})
+
   }
   
 
@@ -121,6 +138,18 @@ const ContactsManage = (props) => {
     props.history.push('/manage/contacts/add/Company')
   }
   }
+  const setTableData = (type) => {
+    //  dispatch(selectBlog())
+    if(company != {} && response !={}){
+      if(type==="Person"){
+        setState({tableData : contactData})
+        setType("contact")
+      }else if(type==="Company"){
+      setState({tableData : companyData})
+        setType("company")
+      }
+    }
+   }
 
   const handleEdit = record => {
     //   dispatch(selectBlog(record))
@@ -135,7 +164,7 @@ const ContactsManage = (props) => {
   const columns = [
     
     {
-      title: "First Name",
+      title: "Name",
       dataIndex: "firstName",
       key: "_id",
       ...getColumnSearchProps('firstName'),
@@ -148,17 +177,7 @@ const ContactsManage = (props) => {
 
     },
 
-    {
-        title: "Last Name",
-        dataIndex: "lastName",
-        key: "_id",
-        ...getColumnSearchProps('lastName'),
-        sorter: (a, b ,c) => ( 
-          c==='ascend'
-          ?a.description<b.description
-          :a.description>b.description
-        )
-    },
+    
     {
       title: "billingCustomRate",
       dataIndex: "billingCustomRate",
@@ -171,10 +190,10 @@ const ContactsManage = (props) => {
       )
     },
     {
-      title: "Company",
-      dataIndex: "company",
+      title: "Email",
+      dataIndex: "emailAddress",
       key: "_id",
-      ...getColumnSearchProps('company'),
+      ...getColumnSearchProps('emailAddress'),
       sorter: (a, b ,c) => ( 
         c==='ascend'
         ?a.shortDescription<b.shortDescription
@@ -198,37 +217,51 @@ const ContactsManage = (props) => {
 
 
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
-    confirm();
-    setState({
-      searchText: selectedKeys[0],
-      searchedColumn: dataIndex,
-    });
+    state.tableData.map((value,id)=>{
+      let key=id
+     
+      if(value[dataIndex] == selectedKeys){
+        const data={
+          firstName : value.firstName,
+          billingCustomRate : value.billingCustomRate,
+          emailAddress : value.emailAddress.map((value)=>{return <div>{value}<br></br></div>})
+        }
+    
+        let newtableData = searchData
+        newtableData.push(data)
+        setsearchData(newtableData)
+      }    
+    })
+    setState({tableData : searchData})
+    
   };
 
   const handleReset = clearFilters => {
     clearFilters();
     setState({ searchText: '' });
+    setState({tableData : contactData})
+    setsearchData([])
   };
 
 const handleView = (i)=>{
-  
+    console.log(type)
       console.log(i)
-      /*
-      if(type==="Person"){
-        props.history.push('/manage/contacts/add/Person')
-      }else if(type==="Company"){
-        props.history.push('/manage/contacts/add/Company')
+      if(type==="contact"){
+        props.history.push('/view/contact',i)
       }
-      */
-     props.history.push('/view/company',i)
+      if(type==="company"){
+        props.history.push('/view/company',i)
+      }
   }
  
   return (
     <div>
       <div className='p-2 '>
         <Button className='ml-auto' color='success' >Export</Button>
-        <Button className='ml-auto' color='success' onClick={()=>handleAddNew("Person")}>Add Person</Button>
-        <Button className='ml-auto' color='success' onClick={()=>handleAddNew("Company")}>Add Company</Button>
+        <Button className='ml-auto' color='success' onClick={()=>setTableData("Person")}>Person</Button>
+        <Button className='ml-auto' color='success' onClick={()=>setTableData("Company")}>Company</Button>
+        <Button className='ml-auto' color='success' style={{float : "right"}} onClick={()=>handleAddNew("Person")}>Add Person</Button>
+        <Button className='ml-auto' color='success' style={{float : "right"}} onClick={()=>handleAddNew("Company")}>Add Company</Button>
       </div>
       <Table dataSource={state.tableData} columns={columns}
         onRow={(record, rowIndex) => {
