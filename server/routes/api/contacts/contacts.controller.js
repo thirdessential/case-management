@@ -19,7 +19,9 @@ exports.createContact = (req, res) => {
     contact.customFields=req.body.customFields,
     contact.billingPaymentProfile=req.body.billingPaymentProfile,
     contact.billingCustomRate=req.body.billingCustomRate,
-    contact.billingClientId=req.body.billingClientId
+    contact.billingClientId=req.body.billingClientId,
+    contact.userId=req.body.userId
+
  
         contact.save().then(data => {
             res.status(200).json({status: true, message:"Contact list Saved", data})
@@ -62,6 +64,20 @@ exports.view = (req, res) => {
     Contact.findById(req.params.id).populate("company").
         then(data => {
             res.status(200).json({status: true, message:"Contact fetched", data})
+
+        }).catch(error => {
+        res.status(200).json({status: false, message:error})
+
+        })
+}
+
+
+//fetch for one user
+exports.viewSpecific = (req, res) => {
+
+    Contact.find({userId:req.params.id}).
+        then(data => {
+            res.status(200).json({status: true, message:"company fetched", data})
 
         }).catch(error => {
         res.status(200).json({status: false, message:error})
