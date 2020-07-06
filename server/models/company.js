@@ -16,7 +16,8 @@ const Company = new Schema({
     billingCustomRate:String,
     billingClientId:String,
     address:Array,
-    employees:Array
+    employees:Array,
+userId:{type:Schema.Types.ObjectId, ref:"User"}
   
 
 
