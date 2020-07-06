@@ -4,6 +4,7 @@ import Matter from './Matter/matter'
 import Contact from './Contact/contact'
 import { Form } from 'react-bootstrap'
 import api from '../../../../resources/api'
+import {connect} from 'react-redux'
 const { TabPane } = Tabs;
 let res = null
 let data = {
@@ -18,7 +19,7 @@ class customFeilds extends React.Component {
   }
 
   async componentDidMount(){
-    res = await api.get('/user/view/5eecb08eaec6f1001765f8d5')
+    res = await api.get('/user/view/'+this.props.userId)
     data.customFields = res.data.data.customFields
     console.log(data)
   }
@@ -51,15 +52,21 @@ class customFeilds extends React.Component {
     const HandleChange=(e)=>{
       e.persist()
       this.setState(st=>({...st,[e.target.name]:e.target.value}))
+      if(this.state.required === "on"){
+        this.state.required = true
+      }else{
+        this.state.required = false 
+      }
+      if(this.state.default === "on"){
+        this.state.default = true
+      }else{
+        this.state.default = false
+      }
       console.log(this.state)
     }
     const HandleOk=()=>{
-      if(this.state.required == "on"){
-        this.state.required = true
-      }
-      if(this.state.default == "on"){
-        this.state.default = true
-      }
+      notification.destroy()
+   
       const newdata = {
         name : this.state.name,
         type : this.state.type,
@@ -71,10 +78,18 @@ class customFeilds extends React.Component {
       if(res!==null){
         data.customFields.push(newdata)
       }
-      console.log(data)
-       api.post('/user/update/5eecb08eaec6f1001765f8d5', data).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
+      if ((newdata.name ==="" ||newdata.name ===undefined) || (newdata.type ==="" ||newdata.type ===undefined) || (newdata.required ===true && newdata.default ===true) || (newdata.required ===false && newdata.default ===false) ) {
+        return notification.warning({
+          message: "Fields Should Not Be Empty",
+        });
+      }else{
+       api.post('/user/update/'+this.props.userId, data).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
       this.setModal2Visible(false)
-      window.location.reload()
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000);
+      }
+
     }
     const operations = <Button onClick={() => this.setModal2Visible(true)}>Add</Button>
     return (
@@ -104,12 +119,11 @@ class customFeilds extends React.Component {
                 <Form.Label>Select Custom Feild type</Form.Label>
                 <Form.Control as="select" name="type" onChange={HandleChange}>
                 <option>Checkbox</option>
-                <option>Contact Select</option>
                 <option>Date</option>
-                <option>Email Address</option>
+                <option>password</option>
                 <option>Integer</option>
                 <option>Matter</option>
-                <option>Money</option>
+                <option>number</option>
                 <option>Picklist</option>
                 <option>Text</option>
                 </Form.Control>
@@ -137,5 +151,7 @@ class customFeilds extends React.Component {
   }
 }
 
-
-export default customFeilds
+const mapStateToProps = state => ({
+  userId: state.user.token.user._id
+});
+export default connect(mapStateToProps)(customFeilds)

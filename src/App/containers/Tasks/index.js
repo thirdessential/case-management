@@ -6,8 +6,8 @@ import List from './List/List'
 import api from "../../../resources/api"
 import {Button,Modal, notification, Popconfirm,message} from 'antd'
 import { Form, Row , Col} from "react-bootstrap";
-
-
+import {connect} from 'react-redux'
+ 
 
 let res = {}
 let response = {}
@@ -22,7 +22,7 @@ class Tasks extends React.Component{
       visible: false,
       confirmLoading: false,
       loading: false,
-      Data : {},
+      Data : {priority : "Normal" , matter : ""},
       editMode : false,
       res  : "",
       selected : null
@@ -46,17 +46,25 @@ class Tasks extends React.Component{
   };
    openNotificationWithSucces = type => {
     notification[type]({
-      message: 'success',
+      message: 'Task Saved',
     });
   };
 
-  handleOk = () => {
-    this.setState({ loading: true });
-    console.log(this.state.Data)
-    if(this.state.editMode){
-      api.post('tasks/edit/'+ this.state.selected, this.state.Data).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
+  handleOk = (e) => {
+   /* this.setState({ loading: true }); */
+   e.preventDefault()
+   notification.destroy()
+    if ((this.state.Data.taskName ==="" ||this.state.Data.taskName ===undefined) || (this.state.Data.description ==="" ||this.state.Data.taskName ===undefined) || (this.state.Data.dueDate ==="" ||this.state.Data.dueDate ===undefined) || (this.state.Data.matter ==="" ||this.state.Data.matter ===undefined) ) {
+      return notification.warning({
+        message: "Fields Should Not Be Empty",
+      });
     }else{
-      api.post('/tasks/create', this.state.Data).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
+    const data = this.state.Data
+    data.userId = this.props.userId
+    if(this.state.editMode){
+      api.post('tasks/edit/'+ this.state.selected, data).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
+    }else{
+      api.post('/tasks/create', data).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
     }
     this.setState({
       ModalText: 'The modal will be closed after two seconds',
@@ -66,10 +74,12 @@ class Tasks extends React.Component{
       this.setState({
         loading:false,
         visible: false,
-        confirmLoading: false,
+        confirmLoading: false,  
       });
-    }, 2000);
- 
+      window.location.reload()
+    }, 1000);
+   
+  }
   };
 
   handleCancel = () => {
@@ -103,11 +113,14 @@ class Tasks extends React.Component{
      console.log(value)
     api.get('tasks/delete/'+value._id)
     message.success('Deleted');
-    window.location.reload()
+    setTimeout(() => {
+      window.location.reload()
+    }, 1500);
+   
    }
   async componentDidMount(){
     
-    res = await api.get('/tasks/showall')
+    res = await api.get('/tasks/viewforuser/'+ this.props.userId)
     ListData = res.data.data.map((value, index)=>{
       return  <tr>
       <th scope="row">{value.dueDate}</th>
@@ -150,14 +163,18 @@ class Tasks extends React.Component{
       </tr>
       })
       console.log(res)
-      await api.get('/matter/showall').then(res=>response=res.data.data)
+      await api.get('/matter/viewforuser/'+ this.props.userId).then(res=>response=res.data.data)
+      console.log(response)
        options = response.map((value , index)=>{
+         if(index == 0){
+           let newdata = this.state
+           newdata.Data.matter = value._id
+           this.setState(newdata)
+         }
      return <option>{value.matterDescription}</option>
 
-    
-
     })
-    this.setState({ListData, tableData})
+    this.setState({ListData, tableData, options})
     
   }
   
@@ -204,23 +221,23 @@ class Tasks extends React.Component{
         <Row>
             <Form.Group controlId="taskName">
                 <Form.Label>Task Name</Form.Label>
-                <Form.Control type="text" placeholder="Task Name"  onChange={this.handleChange}/>
+                <Form.Control required type="text" placeholder="Task Name"  onChange={this.handleChange}/>
             </Form.Group>
         </Row>
         <Row>
            <Form.Group controlId="dueDate">
                 <Form.Label>Due Date</Form.Label>
-                <Form.Control type="date" placeholder="Due Date"  onChange={this.handleChange}/>
+                <Form.Control required type="date" placeholder="Due Date"  onChange={this.handleChange}/>
             </Form.Group>
         </Row>
       </Col>
       <Form.Group controlId="description">
         <Form.Label>Description</Form.Label>
-        <Form.Control as="textarea" rows="3" onChange={this.handleChange} />
+        <Form.Control required as="textarea" rows="3" onChange={this.handleChange} />
       </Form.Group>
       <Form.Group controlId="priority">
       <Form.Label>Priority</Form.Label>
-      <Form.Control as="select" onChange={this.handleChange}>
+      <Form.Control as="select" defaultValue="Normal" required onChange={this.handleChange}>
         <option>Low</option>
         <option>Normal</option>
         <option>High</option>
@@ -228,8 +245,8 @@ class Tasks extends React.Component{
     </Form.Group>
             <Form.Group controlId="matter">
                 <Form.Label>Matter</Form.Label>
-                <Form.Control as="select" onChange={this.handleChange} name="matter">
-                  {options}
+                <Form.Control required as="select" onChange={this.handleChange} name="matter">
+                  {this.state.options}
                 </Form.Control>
               </Form.Group>
       </Form>
@@ -238,6 +255,7 @@ class Tasks extends React.Component{
   }
 }
 
-
-
-export default Tasks
+const mapStateToProps = state => ({
+  userId: state.user.token.user._id
+});
+export default connect(mapStateToProps)(Tasks)

@@ -2,6 +2,7 @@ import { Table, Tag, Space, Button,Modal, Popconfirm, message,notification} from
 import React from 'react'
 import {Form} from 'react-bootstrap'
 import api from '../../../../resources/api'
+import {connect} from 'react-redux'
 
 let res = {}
 let newRes = {}
@@ -16,7 +17,7 @@ class tables extends React.Component{
     }
   }
   async componentDidMount(){ 
-    res = await api.get('/user/view/5eecb08eaec6f1001765f8d5')
+    res = await api.get('/user/view/'+this.props.userId)
 
     data= res.data.data.customFields.map((value,index)=>{
       return {
@@ -37,7 +38,8 @@ class tables extends React.Component{
               />
       }
     })
-    console.log(data)
+    this.setState({data : data})
+    console.log(this.state.data)
     
   }
   state = {
@@ -69,6 +71,7 @@ class tables extends React.Component{
   };
   render(){
     const HandleOk=()=>{
+      notification.destroy()
       if(this.state.required == "on"){
         this.state.required = true
       }else{
@@ -92,11 +95,18 @@ class tables extends React.Component{
         console.log(newData.customFields)
         newData.customFields[index]=newdata
       }
-
-    console.log(newData)
-       api.post('/user/update/5eecb08eaec6f1001765f8d5', newData).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
-      this.setModal2Visible(false)
-      window.location.reload()
+      if ((newdata.name ==="" ||newdata.name ===undefined) || (newdata.type ==="" ||newdata.type ===undefined) || (newdata.required ===true && newdata.default ===true) || (newdata.required ===false && newdata.default ===false) ) {
+        return notification.warning({
+          message: "Fields Should Not Be Empty",
+        });
+      }else{
+        api.post('/user/update/'+ this.props.userId, newData).then(()=>this.openNotificationWithSucces('success')).catch(()=>{this.openNotificationWithFailure('error')})
+        this.setModal2Visible(false)
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000);
+      }
+    
     }
     const HandleChange=(e)=>{
       e.persist()
@@ -114,8 +124,10 @@ class tables extends React.Component{
       newRes = res.data.data
       newRes.customFields.splice(record.key, 1)
       console.log(newRes)
-      api.post('/user/update/5eecb08eaec6f1001765f8d5', newRes)
-      window.location.reload()
+      api.post('/user/update/'+this.props.userId, newRes)
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000);
     }
     const columns = [
       {
@@ -162,7 +174,7 @@ class tables extends React.Component{
     ];
     
     return <div>
-      <Table columns={columns} dataSource={data} />
+      <Table columns={columns} dataSource={this.state.data} />
     <Modal
     title="Add Custom Feild"
     centered
@@ -212,4 +224,7 @@ class tables extends React.Component{
 }
 
 
-export default tables
+const mapStateToProps = state => ({
+  userId: state.user.token.user._id
+});
+export default connect(mapStateToProps)(tables)

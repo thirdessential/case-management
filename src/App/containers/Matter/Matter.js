@@ -4,6 +4,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import "antd/dist/antd.css";
 import Highlighter from 'react-highlight-words';
 import api from '../../../resources/api'
+import {connect} from 'react-redux'
 
 let response={}
 let tableData=[]
@@ -11,17 +12,20 @@ let tableData=[]
 class matterManage extends React.Component{
    constructor(props){
        super(props)
-       this.state= {tableData : []}
+       this.state= {
+         data : {},
+         tableData : [],
+         searchData : []
+        }
    }
 
    async componentDidMount(){
-    await api.get('/matter/showall').then(res=>response=res.data.data)
+    await api.get('/matter/viewforuser/'+ this.props.userId).then(res=>response=res.data.data)
     response.map((value , index)=>{
       let newData = {
         key : index,
-        MatterName: value.MatterName,
+        matterDescription : value.matterDescription,
         Client: value.client,
-        MatterNotification : value.matterDescription,
         PractiseArea : value.practiseArea,
         OpenDate : value.openDate
       }
@@ -130,11 +134,11 @@ class matterManage extends React.Component{
     
 
     {
-        title: "Matter Name",
-        dataIndex: "MatterName",
+        title: "Matter Description",
+        dataIndex: "matterDescription",
         key: "_id",
         defaultSortOrder: 'descend',
-       ...getColumnSearchProps('MatterName'),
+       ...getColumnSearchProps('matterDescription'),
         sorter: (a, b ,c) => ( 
           c==='ascend'
           ?a.description<b.description
@@ -155,17 +159,6 @@ class matterManage extends React.Component{
         :a.shortDescription>b.shortDescription
       )
     },
-    {
-        title: "Matter Notification",
-        dataIndex: "MatterNotification",
-        key: "_id",
-        ...getColumnSearchProps('MatterNotification'),
-        sorter: (a, b ,c) => ( 
-          c==='ascend'
-          ?a.shortDescription<b.shortDescription
-          :a.shortDescription>b.shortDescription
-        )
-      },
     {
       title: "Practise Area",
       dataIndex: "PractiseArea",
@@ -213,16 +206,28 @@ class matterManage extends React.Component{
 
 
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
-    confirm();
-    this.setState({
-      searchText: selectedKeys[0],
-      searchedColumn: dataIndex,
-    });
+    const newSearchData = []
+    this.state.tableData.map((value , index)=>{
+      if(value[dataIndex] == selectedKeys){
+      let newdata = {
+        key : index,
+        matterDescription: value.matterDescription,
+        Client: value.Client,
+        PractiseArea : value.PractiseArea,
+        OpenDate : value.OpenDate
+      } 
+        newSearchData.push(newdata)
+     }
+    })
+   
+    this.setState({tableData : newSearchData})
+ 
   };
 
   const handleReset = clearFilters => {
     clearFilters();
     this.setState({ searchText: '' });
+    this.setState({tableData : tableData, searchData : []})
   };
 
 const handleView = (rec)=>{
@@ -251,4 +256,7 @@ const handleView = (rec)=>{
   );}
 };
 
-export default matterManage;
+const mapStateToProps = state => ({
+  userId: state.user.token.user._id
+});
+export default connect(mapStateToProps)(matterManage)
