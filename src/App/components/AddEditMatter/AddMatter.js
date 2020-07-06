@@ -2,8 +2,11 @@ import React, { useState, useEffect, useDispatch, useSelector} from 'react'
 import { Form, Row , Col , Button } from "react-bootstrap";
 import { message,  Modal, Card, Result, notification } from 'antd';
 import api from '../../../resources/api'
-import AddPerson from '../AddEditContact/AddPerson'
+import AddPerson from '../AddEditContact/AddPersonModal'
 import DynamicFeild from '../AddEditMatter/DynamicFeilds/index'
+import { connect } from 'react-redux'
+
+const validNameRegex = RegExp(/^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u);
 
 let res = {}
 let customFields = null
@@ -13,15 +16,19 @@ let editMode = false
 let editRes = ""
 let customData =  []
 let clientId = 1
-let relatedId = []
-let count = 1
+let error = {
+  relationship: [""]
+}
+
 class AddEditMatter extends React.Component{
   constructor(props){
     super(props)
     this.state = {
-      relatedContacts  : [{relationship : "" , contact : "", billThis: ""}],
+      rate : "Flat",
+      status :"Open",
+      client : "",
+      relatedContacts  : [],
       customFields : [{
-
       }],
       modal : false,
     }
@@ -29,10 +36,9 @@ class AddEditMatter extends React.Component{
   }
   handleCustom(e){
     e.persist()
-    let list = customData
     const { id , value, name } = e.target
-
-    list[id]={[name] : value}
+    customData[id]={[name] : value}
+    console.log(customData)
 
   }
   async componentDidMount(){
@@ -40,28 +46,77 @@ class AddEditMatter extends React.Component{
       editMode= true;
       editRes= this.props.location.state
     }
-    res = await api.get('/user/view/5eecb08eaec6f1001765f8d5').then(
-      contacts = await api.get('/contact/showall'))
+    res = await api.get('/user/view/'+this.props.userId).then(
+      contacts = await api.get('contact/viewforuser/'+this.props.userId))
     
    
     optns = contacts.data.data.map((value, index)=>{
+      if(index == 0){
+        const temp = this.state
+        temp.relatedContacts.contact = value._id
+        temp.client = value._id
+
+        this.setState(temp)
+
+      }
       return <option id={index}>{value.firstName}</option>
      })
+   
     
     customFields = res.data.data.customFields.map((value, index)=>{
-    
       return <Form.Group key={index} controlId={index}>
               <Form.Label>{value.name}</Form.Label>
-              <Form.Control name={value.name} type={value.type} placeholder={value.name} onChange={this.handleCustom}/>
+              <Form.Control required={value.required} name={value.name} type={value.type} placeholder={value.name} onChange={this.handleCustom}/>
              </Form.Group>
     })
+    this.setState({optns : optns, customFields : customFields})
+  }
+   openNotificationWithIcon = type => {
+    notification[type]({
+      message: 'Matter Saved'});
+  };
+    openNotificationWithfailure = type => {
+    notification[type]({
+      message: 'Failure'});
+  };
+   
+  handleSubmit = (event) => {
+    event.preventDefault();
+    notification.destroy()
+   
+
+    if ((this.state.matterDescription ==="" ||this.state.matterDescription ===undefined) ) {
+      return notification.warning({
+        message: "Please add a matter description",
+      });
+    }else  if ((this.state.client ==="" ||this.state.client ===undefined) ) {
+      return notification.warning({
+        message: "Please add a matter description",
+      });
+    }else{
+      console.log("all good")
+       const data = this.state
+        data.customFields = customData
+        data.client = contacts.data.data[clientId]._id
+        data.userId = this.props.userId
+        console.log(data)
+       if(this.state.editMode){
+          //  dispatch(updateBlog({id:state._id,body:state}))
+       }else{
+         api.post('matter/create', data).then(res=>console.log(res)).then(()=>this.openNotificationWithIcon('success')).catch(()=>this.openNotificationWithfailure('error'))
+         
+       }
+
+       if(this.props.location!=undefined){
+        this.props.history.goBack()
+       }
+    }
   }
   
   render(){
     
 
     const addFeild=() =>{
-      count++
       let list = this.state.relatedContacts
       list.push({relationship : "", Contact : "", billThis : ""})
       this.setState({relatedContacts : list})
@@ -76,8 +131,17 @@ class AddEditMatter extends React.Component{
     if(e.target.name==="client"){
       clientId = e.target.selectedIndex
     }
-    console.log(e)
+   
+    console.log(this.state)
   }
+  const handleDelete = (e)=>{
+    e.persist()
+     const { name , id } = e.target
+     let newState = this.state
+     newState.relatedContacts.splice(id, 1)
+     this.setState(newState)
+  }
+
   const HandleDynamicChange = (e)=>{
     e.persist()
     let list = this.state
@@ -90,42 +154,35 @@ class AddEditMatter extends React.Component{
     if(name=='contact'){
       list.relatedContacts[id][name] = contacts.data.data[e.target.selectedIndex]._id
     }
+    console.log(error.relationship)
+    switch (name) {
+      case "relationship":
+        error.relationship[id] =
+        (!validNameRegex.test(value))
+        ? "Realtionship must be in characters!"
+        : (value.length > 20) 
+        ? "Relationship must be less than 20 characters long!" 
+        : "";
+   break;
+     
+      default:
+        break;
+    }
     this.setState(list)
     console.log(this.state)
   }
-  const openNotificationWithIcon = type => {
-    notification[type]({
-      message: 'Matter Saved'});
-  };
-  const openNotificationWithfailure = type => {
-    notification[type]({
-      message: 'Failure'});
-  };
+
  
-   const handleSubmit = e => {
-     const data = this.state
-     data.customFields = customData
-     data.client = contacts.data.data[clientId]._id
-
-     console.log(data)
-        e.preventDefault()
-        if(this.state.editMode){
-           //  dispatch(updateBlog({id:state._id,body:state}))
-        }else{
-           api.post('matter/create', data).then(()=>openNotificationWithIcon('success')).catch(()=>openNotificationWithfailure('error'))
-        }
-
-        this.props.history.goBack()
-    }
   
-    let returnx
-    if((editMode==true && this.state.editRes !=="" )|| editMode==false ){
-      returnx =   <div className='form-width'>
+  
+   
+    return (
+      <div className='form-width'>
       <div className="form-header-container mb-4">
             <h3 className="form-header-text">Add New Matter</h3>
       </div>
       <Card title="Matter Information" className="mb-4">
-        <Form className="form-details">
+        <Form className="form-details" >
           
           <Form.Group controlId="exampleForm.ControlSelect1">
             <Form.Label>Client</Form.Label>
@@ -139,12 +196,12 @@ class AddEditMatter extends React.Component{
             </div>
             <Form.Group controlId="formGroupMatter">
               <Form.Label>Matter Description</Form.Label>
-                <Form.Control name='matterDescription' as="textarea" rows="3" type="text" placeholder="Matter description" 
+                <Form.Control required name='matterDescription' as="textarea" rows="3" type="text" placeholder="Matter description" 
                   value={editRes.matterDescription} onChange={handleChange}/>
               </Form.Group>
               <Form.Group controlId="formGroupClientRefenceNumber">
                 <Form.Label>Client reference number</Form.Label>
-                <Form.Control name='clientReferenceNumber' type="text" placeholder="Client Refence Number" 
+                <Form.Control name='clientReferenceNumber' type="number" placeholder="Client Refence Number" 
                   value={editRes.clientReferenceNumber} onChange={handleChange}/>
               </Form.Group>
               <Form.Group controlId="exampleForm.ControlSelect1">
@@ -193,7 +250,7 @@ class AddEditMatter extends React.Component{
 
       <Card title="Related Contacts" className="mb-4">
           <Form className="form-details">
-          <DynamicFeild InputList={this.state.relatedContacts}  option={optns} change={HandleDynamicChange} editRes={editRes} editMode={editMode}></DynamicFeild> 
+          <DynamicFeild name="realtedContacts" InputList={this.state.relatedContacts}  option={optns} error={error.relationship} change={HandleDynamicChange} editRes={editRes} delete={handleDelete} editMode={editMode}></DynamicFeild> 
 
     
             <br/>
@@ -204,7 +261,7 @@ class AddEditMatter extends React.Component{
       </Card>
       <Card title="Custom Feilds"  className="mb-4">
       <Form className="form-details">
-      <p>Customise your<Button variant="link" onClick={()=>this.props.history.push('/settings/customFeilds')}>Custom Feild</Button></p>
+      <p>Customise your<Button variant="link" onClick={()=>this.props.history.push('/settings/customFeilds')}>Custom Feilds</Button></p>
 
       {customFields}
       </Form>
@@ -232,9 +289,10 @@ class AddEditMatter extends React.Component{
                   <option>New Task List</option>
                 </Form.Control>
               </Form.Group>
+       
       </Form>
       </Card>
-      <Button className="btn btn-success" onClick={handleSubmit}>ADD</Button>
+      <Button onClick={this.handleSubmit} lassName="btn btn-success" >ADD</Button>
      <br></br>
       <Modal
         title="Add Company"
@@ -247,14 +305,14 @@ class AddEditMatter extends React.Component{
 
       </Modal>
       </div>
-    }else{
-      returnx = null
-    }
-    return (
-     returnx
+   
     )
   }
 }
 
+const mapStateToProps = state => ({
+  userId: state.user.token.user._id
+});
+export default connect(mapStateToProps)(AddEditMatter)
 
-export default AddEditMatter
+

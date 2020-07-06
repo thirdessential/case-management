@@ -23,15 +23,16 @@ class DynamicFeilds extends React.Component {
     { 
     this.state.InputList.map((val, idx)=> {
           let inputId = `input-${idx}`
-    
+      console.log(this.props + " from dynamic")
           return (
             <div key={idx}>
             <Row>
               <Col>
                     <Form.Group controlId={idx}>
                         <Form.Label>Relationship</Form.Label>
-                        <Form.Control name="realationship"  type="text" placeholder="Relationship"  onChange={this.props.change} value={editRes[idx].relationship}/>
+                        <Form.Control name="relationship"  type="text" placeholder="Relationship"  onChange={this.props.change} value={editRes[idx].relationship}/>
                     </Form.Group>
+                    <p className="help-block text-danger">{this.props.error[idx]}</p>
              </Col>
              <Col>
                   <Form.Group controlId={idx}>
@@ -41,12 +42,13 @@ class DynamicFeilds extends React.Component {
                  </Form.Control>
                  </Form.Group>
             </Col>
+            
+            <Button id={idx} style={{ "height": "45px", "margin-top": "25px"}} name={this.props.name} onClick={this.props.delete}>-</Button>
         </Row> 
           <Form.Group controlId={idx}>
             <Form.Check name="billThis" type="checkbox" label="Bill this contact" id={idx} defaultValue={editRes[idx].relationship} onChange={this.props.change} />
           </Form.Group>
- <br></br>
-            </div>
+        </div>
           )
         })}
 </div> : <div >
@@ -62,6 +64,7 @@ class DynamicFeilds extends React.Component {
                         <Form.Label>Relationship</Form.Label>
                         <Form.Control name='relationship' type="text" placeholder="Relationship"  onChange={this.props.change} />
                     </Form.Group>
+                    <p className="help-block text-danger">{this.props.error[idx]}</p>
              </Col>
              <Col>
                   <Form.Group controlId={idx}>
@@ -71,11 +74,11 @@ class DynamicFeilds extends React.Component {
                  </Form.Control>
                  </Form.Group>
             </Col>
+            <Button id={idx} style={{ "height": "45px", "margin-top": "25px"}} name={this.props.name} onClick={this.props.delete}>-</Button>
         </Row> 
           <Form.Group controlId={idx}>
             <Form.Check name="billThis" type="checkbox" label="Bill this contact"   onChange={this.props.change}  />
           </Form.Group>
- <br></br>
             </div>
           )
         })}
