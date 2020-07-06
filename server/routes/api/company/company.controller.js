@@ -16,6 +16,8 @@ exports.createCompany = (req, res) => {
     company.billingCustomRate=req.body.billingCustomRate,
     company.billingClientId=req.body.billingClientId,
     company.employees=req.body.employees
+    company.userId=req.body.userId
+
 
  
         company.save().then(data => {
@@ -57,6 +59,21 @@ exports.showAll = (req, res) => {
 exports.view = (req, res) => {
 
     Company.findById(req.params.id).
+        then(data => {
+            res.status(200).json({status: true, message:"company fetched", data})
+
+        }).catch(error => {
+        res.status(200).json({status: false, message:error})
+
+        })
+}
+
+
+
+//fetch for one user
+exports.viewSpecific = (req, res) => {
+
+    Company.find({userId:req.params.id}).
         then(data => {
             res.status(200).json({status: true, message:"company fetched", data})
 
