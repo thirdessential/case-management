@@ -70,3 +70,17 @@ exports.viewMatter = (req, res) => {
 
         })
 }
+
+
+//fetch for one user
+exports.viewSpecific = (req, res) => {
+
+    matters.find({userId:req.params.id}).
+        then(data => {
+            res.status(200).json({status: true, message:"matters fetched", data})
+
+        }).catch(error => {
+        res.status(200).json({status: false, message:error})
+
+        })
+}
