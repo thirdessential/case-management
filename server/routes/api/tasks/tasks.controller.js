@@ -78,3 +78,13 @@ exports.viewSpecific = (req, res) => {
 
         })
 }
+
+exports.fetchForMatter = (req, res) => {
+    tasks.find({matter: req.params.id})
+      .then((data) => {
+        res.status(200).json({ status: true, message: "tasks fetched for matter", data });
+      })
+      .catch((error) => {
+        res.status(400).json({ status: false, message: error });
+      });
+  };
