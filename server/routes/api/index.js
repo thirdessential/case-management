@@ -11,7 +11,7 @@ const company  = require("./company")
 const contact = require("./contacts")
 const matter = require("./matters")
 const tasks = require("./tasks")
-
+const calendar = require("./calendar")
 
 router.use('/contactus', contactus)
 router.use('/blogs', blogs)
@@ -24,7 +24,7 @@ router.use('/contact', contact)
 // router.use('/user', authMiddleware)
 router.use('/user', user)
 router.use('/tasks', tasks)
-
+router.use("/calendar", calendar)
 
 router.use('/admin', admin)
 
