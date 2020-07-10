@@ -1,11 +1,29 @@
 import React, { useEffect } from "react";
 import { DateTimePickerComponent } from "@syncfusion/ej2-react-calendars";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
+import { TimePickerComponent } from '@syncfusion/ej2-react-calendars';
 import { RecurrenceEditorComponent } from "@syncfusion/ej2-react-schedule";
-import { notification } from "antd";
-
+import { notification, Button } from "antd";
+import api from '../../../resources/api'
 const EditorTemplate = props => {
+
+  let options = []
+  let res = {}
+  useEffect(()=>{
+    async function fetchData(){
+      res =  await api.get('matter/viewforuser/'+props.userId)
+      console.log(res)
+      setdata()
+    }
+    fetchData()
+  },[])
+  const setdata = ()=>{
+    res.data.data.map((value,item)=>{
+      options.push({text :value.matterDescription, value : item})
+    })
+  }
   function onChange(args){
+    console.log("date")
     console.log(args.itemData.value)
     {/*
     if(args.itemData.value==='via Email'){
@@ -25,7 +43,7 @@ const EditorTemplate = props => {
     } */}
     
   }
-  
+  console.log(props)
   return props !== undefined ? (
     <table
       className="custom-event-editor"
@@ -36,10 +54,11 @@ const EditorTemplate = props => {
           <td className="e-textlabel">Title</td>
           <td colSpan={4}>
             <input
-              id="Title"
+              id="title"
               className="e-field e-input"
               type="text"
-              name="Title"
+              name="Subject"
+              onChange = {props.handleChange}
               style={{ width: "100%" }}
             />
           </td>
@@ -48,10 +67,11 @@ const EditorTemplate = props => {
           <td className="e-textlabel">StartTime :</td>
           <td colSpan={4}>
             <DateTimePickerComponent
-              format="dd/MM/yy hh:mm a"
-              id="StartTime"
+              format="MM/dd/yy hh:mm a"
+              id="startTime"
               data-name="StartTime"
-              value={new Date(props.startTime || props.StartTime)}
+              change = {props.DateTimeChange}
+              value={props.startTime || props.StartTime}
               className="e-field"
             ></DateTimePickerComponent>
           </td>
@@ -60,26 +80,44 @@ const EditorTemplate = props => {
           <td className="e-textlabel">EndTime : </td>
           <td colSpan={4}>
             <DateTimePickerComponent
-              format="dd/MM/yy hh:mm a"
-              id="EndTime"
+              format="MM/dd/yy hh:mm a"
+              id="endTime"
               data-name="EndTime"
-              value={new Date(props.endTime || props.EndTime)}
+              change={props.DateTimeChange}
+              value={props.endTime || props.EndTime}
               className="e-field"
             ></DateTimePickerComponent>
           </td>
         </tr>
-
-        <tr><td className="e-textlabel">Recurrence</td><td colSpan={4}>
-        <RecurrenceEditorComponent id='RecurrenceEditor'
-        ref={props.setRecurrenceRef}></RecurrenceEditorComponent>
-      </td></tr>
-
+        <tr>    
+                  <td className="e-textlabel">type </td>
+                    <td colSpan={4}>
+                    <label>
+                      <input type="checkbox" id="allday" name="allday" data-name="AllDay"
+                      onChange={props.handleChange}
+                        //onChange={() => setChecked(!checked)}
+                      />
+                      All day
+                    </label>
+             
+                    <label>
+                      <input type="checkbox" id="repeat" name="repeat" data-name="Repeat"
+                        onChange={props.handleChange}
+                        //onChange={() => setChecked(!checked)}
+                      />
+                      Repeat
+                    </label>
+                  </td>
+                 
+                </tr>
         <tr>
           <td className="e-textlabel">Location</td>
           <td colSpan={4}>
             <input
-              id="Location"
+              onChange={props.handleChange}
+              id="location"
               className="e-field e-input"
+              data-name="Location"
               type="text"
               name="Location"
               style={{ width: "100%" }}
@@ -90,23 +128,27 @@ const EditorTemplate = props => {
           <td className="e-textlabel">Matter</td>
           <td colSpan={4}>
             <DropDownListComponent
-              id="Matter"
+              id="matter"
               placeholder="Choose status"
               data-name="Matter"
+              change={props.DateTimeChange}
               className="e-field"
+              data-name="Matter"
               style={{ width: "100%" }}
-              dataSource={["New", "Requested", "Confirmed"]}
+              dataSource={options}
               value={props.EventType || null}
             ></DropDownListComponent>
           </td>
         </tr>
         <tr>
-          <td className="e-textlabel">Reason</td>
+          <td className="e-textlabel">Description</td>
           <td colSpan={4}>
             <textarea
-              id="Description"
+             onChange={props.handleChange}
+              id="description"
               className="e-field e-input"
               name="Description"
+              data-name="Description"
               rows={3}
               cols={50}
               style={{
@@ -117,38 +159,39 @@ const EditorTemplate = props => {
             ></textarea>
           </td>
         </tr>
-        <tr>
-          <td className="e-textlabel">Remind Before </td>
+        <tr>    
+                  <td className="e-textlabel">Remind via : </td>
+                    <td colSpan={4}>
+                    <label>
+                      <input type="checkbox" id="email" name="email" data-name="email"
+                        onChange={props.handleChange}
+                        //onChange={() => setChecked(!checked)}
+                      />
+                      Email
+                    </label>
+             
+                    <label>
+                      <input type="checkbox" id="notification" name="notification" data-name="Notification"
+                        onChange={props.handleChange}
+                        //onChange={() => setChecked(!checked)}
+                      />
+                      Notification
+                    </label>
+                  </td>
+                 
+                </tr>
+                <tr>
+          <td className="e-textlabel">Time For Reminder :</td>
           <td colSpan={4}>
-            <textarea
-              id="Alert"
-              className="e-field e-input"
-              name="alert"
-              rows={2}
-              cols={50}
-              style={{
-                width: "100%",
-                height: "60px !important",
-                resize: "vertical",
-              }}
-            ></textarea>
+          <TimePickerComponent 
+          id="timeForReminder" 
+          change={props.DateTimeChange}
+          data-name="TimeForReminder"
+          value={new Date(props.timeForReminder || props.timeForReminder)}
+          placeholder="Select a Time"
+          className="e-field"  />
           </td>
         </tr>
-        <tr>    
-                  <td className="e-textlabel">Show Reminder</td>
-                  <td colSpan={4}>
-                    <DropDownListComponent
-                      id="ReminderState"
-                      placeholder="Choose status"
-                      data-name="ReminderState"
-                      className="e-field"
-                      style={{ width: "100%" }}
-                      change={(e)=>onChange(e)}
-                      dataSource={["via Email", "via Notification", "Before 10 mins"]}
-                      value={props.EventType || null}
-                    ></DropDownListComponent>
-                  </td>
-                </tr>
       </tbody>
     </table>
   ) : (
