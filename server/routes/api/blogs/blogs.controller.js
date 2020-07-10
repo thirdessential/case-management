@@ -72,3 +72,16 @@ exports.editBlog = (req, res) => {
 
         })
 }
+
+//upload
+exports.upload= (req, res) => {
+console.log(req.file)
+    Blogs.findOneAndUpdate(req.params.id, {$set:{image:req.file.path}} ).
+        then(data => {
+            res.status(200).json({status: true, message:"image uploaded", data})
+
+        }).catch(error => {
+        res.status(200).json({status: false, message:error})
+
+        })
+}
