@@ -9,7 +9,7 @@ const Blogs = new Schema({
     description:String,
     shortDescription:String,
     author:String,
-  
+    image:String
 
 
 },schemaOptions)
