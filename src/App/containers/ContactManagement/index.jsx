@@ -4,7 +4,8 @@ import { SearchOutlined } from '@ant-design/icons';
 import "antd/dist/antd.css";
 import Highlighter from 'react-highlight-words';
 import { useDispatch, useSelector } from "react-redux";
-import { getBlogs, deleteBlog,selectBlog } from "../../../store/Actions";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import api from '../../../resources/api'
 
 
@@ -50,7 +51,8 @@ const ContactsManage = (props) => {
       const data={
         firstName : value.firstName + " " + value.lastName,
         billingCustomRate : value.billingCustomRate,
-        emailAddress : value.emailAddress.map((value)=>{return <div>{value}<br></br></div>})
+        _id: value._id,
+        emailAddress : value.emailAddress.map((value)=>{return value + " , "})
       }
       let newtableData = contactData
       newtableData.push(data)
@@ -243,21 +245,53 @@ const ContactsManage = (props) => {
     setsearchData([])
   };
 
+
 const handleView = (i)=>{
     console.log(type)
-      console.log(i)
+      console.log({i})
       if(type==="contact"){
-        props.history.push('/view/contact',i)
+        props.history.push('/view/contact',i._id)
       }
       if(type==="company"){
-        props.history.push('/view/company',i)
+        props.history.push('/view/company',i._id)
       }
+  }
+  
+  const exportPDF = () => {
+    const unit = "pt";
+    const size = "A4"; // Use A1, A2, A3 or A4
+    const orientation = "portrait"; // portrait or landscape
+
+    const marginLeft = 40;
+    const doc = new jsPDF(orientation, unit, size);
+
+    doc.setFontSize(15);
+
+    const title = "Contacts";
+    const headers = [["Name", "billingCustoRate", "Email"]];
+   
+    let data = []
+    state.tableData.map((val, index)=>{
+      const td= [val.firstName, val.billingCustomRate , val.emailAddress]
+      data.push(td)
+    })
+   
+
+    let content = {
+      startY: 50,
+      head: headers,
+      body: data
+    };
+
+    doc.text(title, marginLeft, 40);
+    doc.autoTable(content);
+    doc.save("contact.pdf")
   }
  
   return (
     <div>
       <div className='p-2 '>
-        <Button className='ml-auto' color='success' >Export</Button>
+        <Button className='ml-auto' color='success' onClick={exportPDF} >Export</Button>
         <Button className='ml-auto' color='success' onClick={()=>setTableData("Person")}>Person</Button>
         <Button className='ml-auto' color='success' onClick={()=>setTableData("Company")}>Company</Button>
         <Button className='ml-auto' color='success' style={{float : "right"}} onClick={()=>handleAddNew("Person")}>Add Person</Button>
@@ -266,7 +300,7 @@ const handleView = (i)=>{
       <Table dataSource={state.tableData} columns={columns}
         onRow={(record, rowIndex) => {
             return {
-              onDoubleClick: () => handleView(rowIndex), // double click row
+              onDoubleClick: () => handleView(record), // double click row
               onContextMenu: event => {}, // right button click row
               onMouseEnter: event => {}, // mouse enter row
               onMouseLeave: event => {}, // mouse leave row
