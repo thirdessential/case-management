@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, Row, Button, Col } from "react-bootstrap";
+import { Form, Row, Button, Col, ToggleButtonGroup } from "react-bootstrap";
 import { Upload, message, Modal, notification, Space, Card } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import DynamicFeilds from "./DynamicFeilds/index.js";
@@ -21,11 +21,10 @@ const validUrlRegex = RegExp(
   /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/
 );
 
-let editMode = null;
+let editMode = true;
 let options = null;
 let response = {};
 let feilds = {};
-let editRes = "";
 let customData = [];
 let customFields = null;
 let res = "";
@@ -37,7 +36,7 @@ let error = {
   Title: "",
 };
 let errors = {
-  Type : [""],
+    Type : [""],
   Email: [""],
   phone: [""],
   Website: [""],
@@ -59,10 +58,12 @@ class newPerson extends React.Component {
       emailAddress: [],
       phone: [],
       website: [],
+      client : "",
       customFields: [{}],
       modal: false,
       valid: false,
       visible: false,
+      editData : "",
       fileList: [
         {
           uid: "-1",
@@ -80,26 +81,35 @@ class newPerson extends React.Component {
     customData[id] = { [name]: value };
   }
   async componentDidMount() {
+    const editData = await api.get('/contact/view/'+this.props.location.state._id)
+    this.setState({editData : editData.data.data})
+    this.setState({phone : editData.data.data.phone , emailAddress : editData.data.data.emailAddress,  address : editData.data.data.address, website : editData.data.data.website})
     response = await api.get("/company/viewforuser/" + this.props.userId);
 
     options = response.data.data.map((value, id) => {
       return <option key={id}>{value.name}</option>;
     });
-    feilds = await api.get("/user/view/5eecb08eaec6f1001765f8d5");
+    feilds = await api.get("/user/view/"+this.props.userId);
 
     customFields = feilds.data.data.customFields.map((value, index) => {
+      let val = ""
+      if(this.state.editData.customFields[index] != undefined){
+        val = this.state.editData.customFields[index][value.name]
+      }
       return (
         <Form.Group key={index} controlId={index}>
           <Form.Label>{value.name}</Form.Label>
           <Form.Control
             name={value.name}
             type={value.type}
-            placeholder={value.name}
+            defaultValue={ val }
             onChange={this.handleCustom}
           />
         </Form.Group>
       );
     });
+  
+
 
     this.setState({ customFields, options });
 
@@ -165,46 +175,46 @@ class newPerson extends React.Component {
       delete data.fileList;
       console.log(data);
       if (editMode) {
-        //  dispatch(updateBlog({id:this.state._id,body:this.state}))
-      } else {
-        api.post("contact/create", data).then((result) => {
-          this.setState({ visible: true });
-          const key = "updatingDetails";
-
-          const openMessage = () => {
-            message.loading({ content: "Uploading Files...", key, duration: 5 });
-          };
-          openMessage();
-          const formData = new FormData();
-          dataList.fileList.forEach((file) => {
-            formData.append("image", file);
-          });
-          console.log({ result });
-          api
-            .post("/contact/upload/"+result.data.data._id, formData)
-            .then((res) => {
-              console.log(res)
-              if (res.status === 200) {
-                setTimeout(() => {
-                  message.success({
-                    content: "Uploaded!",
-                    key,
-                    duration: 3,
-                  });
-                }, 1000);
-              } else {
-                console.log({ res });
-              }
-              if(this.props.location!=undefined){
-                this.props.history.goBack()    
-            }
-            })
-            .catch((err) => {
-              console.log({ err });
+        api.post("/contact/edit/"+ this.props.location.state._id, data)
+        .then((data) => {
+            console.log(data)
+            finalres = data.data._id;
+            this.setState({ visible: true });
+            const key = "updatingDetails";
+  
+            const openMessage = () => {
+              message.loading({ content: "Uploading Files...", key, duration: 5 });
+            };
+            openMessage();
+            const formData = new FormData();
+            dataList.fileList.forEach((file) => {
+              formData.append("image", file);
             });
-        });
-      }
-      
+            console.log({ data });
+            api
+              .post("/contact/upload/" + data.data.data._id, formData)
+              .then((res) => {
+                if (res.status === 200) {
+                  setTimeout(() => {
+                    message.success({
+                      content: "Uploaded!",
+                      key,
+                      duration: 3
+                    });
+                  }, 1000);
+                } else {
+                  console.log({ res });
+                }
+                if(this.props.location!=undefined){
+                  this.props.history.goBack()
+                
+            }
+              })
+              .catch((err) => {
+                console.log({ err });
+              });
+          });
+     }
     } else {
       return notification.warning({
         message: "Please enter valid details",
@@ -260,7 +270,7 @@ class newPerson extends React.Component {
   };
 
   render() {
-    let address = null;
+     
     const handleChange = (e) => {
       e.persist();
       if(e.target.name==="company" && e.target.selectedIndex!=0){
@@ -317,7 +327,6 @@ class newPerson extends React.Component {
     const HandleAddressChange = (e) => {
       e.persist();
       const { id, value, name } = e.target;
-      console.log(id + value + name)
       let newState = this.state;
       newState.address[id][name] = value;
       this.setState(newState);
@@ -410,6 +419,7 @@ class newPerson extends React.Component {
         list.website.push("");
         this.setState(list);
       }
+      console.log(this.state)
     };
 
     const AddCompanyHandler = () => {
@@ -519,16 +529,24 @@ class newPerson extends React.Component {
         });
       },
     };
-
+    const imageUpload= this.state.editData.image 
+                        ?
+                       <div>
+                           <img height="100" width="100" src={this.state.editData.image}></img><br /><br></br>
+                            <Upload {...props}>
+                                    <AntdButton>Select File</AntdButton>
+                             </Upload>
+                       </div>
+                       :
+                       <Upload {...props}>
+                            <AntdButton>Select File</AntdButton>
+                        </Upload>
     return (
       <>
         <div className="form-width">
           <div className="card p-4">
             <Form className="form-details" onSubmit={this.handleSubmit}>
-              <Upload {...props}>
-                <AntdButton>Select File</AntdButton>
-              </Upload>
-              <br />
+              
               {/* <AntdButton  onClick={this.handleUpload}>
         Upload
     </AntdButton> */}
@@ -536,50 +554,58 @@ class newPerson extends React.Component {
                 <h3 className="form-header-text">Add New Person</h3>
               </div>
               <h4>Personal Details</h4>
-
-              <Form.Group controlId="formGroupPrefix">
-                <Form.Label>Prefix</Form.Label>
-                <select
-                  required
-                  name="prefix"
-                  onChange={handleChange}
-                  value={res.Prefix}
-                  style={{ "border-radius": "5px" }}
-                >
-                  <option value="default">Prefix</option>
-                  <option value="Mr.">Mr.</option>
-                  <option value="Miss.">Miss.</option>
-                  <option value="Ms.">Ms.</option>
-                  <option value="Dr.">Dr.</option>
-                  <option value="Gov.">Gov.</option>
-                  <option value="Prof.">Prof.</option>
-                </select>
-              </Form.Group>
-              <p className="help-block text-danger">{error.Prefix}</p>
+              <Row>
+                  <Col xs={7} md="6" >
+        
+                      <Form.Group controlId="formGroupPrefix">
+                        <Form.Label>Prefix</Form.Label>
+                        <select
+                          required
+                          name="prefix"
+                          defaultValue = {this.state.editData.prefix}
+                          onChange={handleChange}
+                          style={{ "border-radius": "5px" }}
+                        >
+                          <option value="default">Prefix</option>
+                          <option value="Mr.">Mr.</option>
+                          <option value="Miss.">Miss.</option>
+                          <option value="Ms.">Ms.</option>
+                          <option value="Dr.">Dr.</option>
+                          <option value="Gov.">Gov.</option>
+                          <option value="Prof.">Prof.</option>
+                        </select>
+                      </Form.Group>
+                      <p className="help-block text-danger">{error.Prefix}</p>
+          
+            
+                        <Form.Group controlId="formGroupFirstName">
+                          <Form.Label>First Name</Form.Label>
+                          <Form.Control
+                            required
+                            name="firstName"
+                            type="text"
+                            defaultValue = {this.state.editData.firstName} 
+                            onChange={handleChange}
+                          />
+                        </Form.Group>
+                        <p className="help-block text-danger">{error.FirstName}</p>
+                   
+                  </Col>
+                  <Col>
+                    {imageUpload}
+                  </Col>
+              </Row>
+        
 
               <Form.Row>
-                <Col>
-                  <Form.Group controlId="formGroupFirstName">
-                    <Form.Label>First Name</Form.Label>
-                    <Form.Control
-                      required
-                      name="firstName"
-                      type="text"
-                      placeholder="First Name"
-                      value={res.firstName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                  <p className="help-block text-danger">{error.FirstName}</p>
-                </Col>
+
                 <Col>
                   <Form.Group controlId="formGroupMiddleName">
                     <Form.Label>Middle Name</Form.Label>
                     <Form.Control
                       name="middleName"
                       type="text"
-                      placeholder="Middle Name"
-                      value={res.middleName}
+                      defaultValue = {this.state.editData.middleName}
                       onChange={handleChange}
                     />
                   </Form.Group>
@@ -592,8 +618,7 @@ class newPerson extends React.Component {
                       required
                       name="lastName"
                       type="text"
-                      placeholder="Last Name"
-                      value={res.lastName}
+                      defaultValue = {this.state.editData.lastName} 
                       onChange={handleChange}
                     />
                   </Form.Group>
@@ -605,8 +630,8 @@ class newPerson extends React.Component {
                 <Col>
                   <Form.Group controlId="formGroupCompany">
                     <Form.Label>Company</Form.Label>
-                    <Form.Control as="select" name="company" onChange={handleChange}>
-                      <option>Select a company</option>
+                    <Form.Control as="select" name="company"  defaultValue = {this.state.editData.company} onChange={handleChange}>
+                      <option key={0}>Select a company</option>
                       {options}
                     </Form.Control>
                   </Form.Group>
@@ -621,6 +646,8 @@ class newPerson extends React.Component {
                 type={"emailAddress"}
                 name={"emailAddress"}
                 text={"Email"}
+                editMode = {editMode}
+                record = {this.state.editData.emailAddress}
                 error={errors.Email}
                 inputList={this.state.emailAddress}
                 change={handleMultipleChange}
@@ -638,8 +665,8 @@ class newPerson extends React.Component {
                     <Form.Control
                       name="title"
                       type="text"
-                      placeholder="Title"
-                      value={res.title}
+                      defaultValue={this.state.editData.title}
+
                       onChange={handleChange}
                     />
                   </Form.Group>
@@ -651,7 +678,9 @@ class newPerson extends React.Component {
                 type={"number"}
                 name={"phone"}
                 text={"Phone Number"}
+                editMode = {editMode}
                 error={errors.phone}
+                record = {this.state.editData.phone}
                 inputList={this.state.phone}
                 change={handleMultipleChange}
                 delete={handleDelete}
@@ -666,6 +695,8 @@ class newPerson extends React.Component {
                 name={"website"}
                 text={"website"}
                 error={errors.Website}
+                editMode = {editMode}
+                record = {this.state.editData.website}
                 inputList={this.state.website}
                 change={handleMultipleChange}
                 delete={handleDelete}
@@ -688,6 +719,7 @@ class newPerson extends React.Component {
                           <Form.Control
                             as="select"
                             name="type"
+                            defaultValue = {this.state.editData.address[index].type}
                             onChange={HandleAddressChange}
                           >
                             <option>Work</option>
@@ -702,7 +734,7 @@ class newPerson extends React.Component {
                           <Form.Control
                             name="street"
                             type="text"
-                            placeholder="Street"
+                            defaultValue= {this.state.editData.address[index].street}
                             onChange={HandleAddressChange}
                           />
                         </Form.Group>
@@ -718,7 +750,7 @@ class newPerson extends React.Component {
                           <Form.Control
                             name="city"
                             type="text"
-                            placeholder="City"
+                            defaultValue= {this.state.editData.address[index].city}
                             onChange={HandleAddressChange}
                           />
                         </Form.Group>
@@ -732,7 +764,7 @@ class newPerson extends React.Component {
                           <Form.Control
                             name="state"
                             type="text"
-                            placeholder="State"
+                            defaultValue= {this.state.editData.address[index].state}
                             onChange={HandleAddressChange}
                           />
                         </Form.Group>
@@ -746,7 +778,7 @@ class newPerson extends React.Component {
                           <Form.Control
                             name="zipCode"
                             type="number"
-                            placeholder="ZipCode"
+                            defaultValue= {this.state.editData.address[index].zipCode}
                             onChange={HandleAddressChange}
                           />
                         </Form.Group>
@@ -758,6 +790,7 @@ class newPerson extends React.Component {
                         <Form.Group controlId={index}>
                           <Form.Label>Country</Form.Label>
                           <select
+                            defaultValue = {this.state.editData.address[index].country}
                             name="country"
                             id={index}
                             onChange={HandleAddressChange}
@@ -1163,3 +1196,4 @@ const mapStateToProps = (state) => ({
   userId: state.user.token.user._id,
 });
 export default connect(mapStateToProps)(newPerson);
+
