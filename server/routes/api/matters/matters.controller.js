@@ -75,7 +75,7 @@ exports.viewMatter = (req, res) => {
 //fetch for one user
 exports.viewSpecific = (req, res) => {
 
-    matters.find({userId:req.params.id}).
+    matters.find({userId:req.params.id}).populate("client").
         then(data => {
             res.status(200).json({status: true, message:"matters fetched", data})
 
