@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table,Button,Input, Space } from "antd";
+import { Table,Button,Input, Space, notification } from "antd";
 import { SearchOutlined } from '@ant-design/icons';
 import "antd/dist/antd.css";
 import Highlighter from 'react-highlight-words';
@@ -62,8 +62,9 @@ const ContactsManage = (props) => {
       let key=id
       const data={
         firstName : value.name ,
+        _id: value._id,
         billingCustomRate : value.billingCustomRate,
-        emailAddress : value.emailAddress.map((value)=>{return <div>{value}<br></br></div>})
+        emailAddress : value.emailAddress.map((value)=>{return value + " , "})
       }
       let newtableData = companyData
       newtableData.push(data)
@@ -156,11 +157,27 @@ const ContactsManage = (props) => {
   const handleEdit = record => {
     //   dispatch(selectBlog(record))
     console.log(record)
-      props.history.push('/manage/contacts/edit/person', record.key)
+    if(type==="contact"){
+      props.history.push('/edit/contact', record)
+    }
+    else if(type==="company"){
+      props.history.push('/edit/company', record)
+    }
+      
   }
   
   const handleDelete = record => {
-    //   dispatch(deleteBlog({id:record._id}))
+    console.log(record)
+    if(type==="contact"){
+      api.get('/contact/delete/'+ record._id).then(()=>notification.success({message: "Contact deleted."})).catch(()=>notification.error({message: "Failed to delete"}))
+    }
+    else if(type==="company"){
+      api.get('/company/delete/'+ record._id).then(()=>notification.success({message: "Company deleted."})).catch(()=>notification.error({message: "Failed to delete"}))
+    }
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000);
+    
   }
   
   const columns = [
@@ -179,18 +196,6 @@ const ContactsManage = (props) => {
 
     },
 
-    
-    {
-      title: "billingCustomRate",
-      dataIndex: "billingCustomRate",
-      key: "_id",
-      ...getColumnSearchProps('billingCustomRate'),
-      sorter: (a, b ,c) => ( 
-        c==='ascend'
-        ?a.shortDescription<b.shortDescription
-        :a.shortDescription>b.shortDescription
-      )
-    },
     {
       title: "Email",
       dataIndex: "emailAddress",
@@ -202,6 +207,19 @@ const ContactsManage = (props) => {
         :a.shortDescription>b.shortDescription
       )
     },
+    {
+      title:'Edit',
+      dataIndex: "edit",
+      key: "_id",
+      render:(_,record)=>{
+          return (
+              <Button variant='danger' onClick={()=>handleEdit(record)}>
+                  Edit
+              </Button>
+          )
+      }
+  },
+    
     {
         title:'Delete',
         dataIndex: "delete",
@@ -268,11 +286,11 @@ const handleView = (i)=>{
     doc.setFontSize(15);
 
     const title = "Contacts";
-    const headers = [["Name", "billingCustoRate", "Email"]];
+    const headers = [["Name", "Email"]];
    
     let data = []
     state.tableData.map((val, index)=>{
-      const td= [val.firstName, val.billingCustomRate , val.emailAddress]
+      const td= [val.firstName , val.emailAddress]
       data.push(td)
     })
    
