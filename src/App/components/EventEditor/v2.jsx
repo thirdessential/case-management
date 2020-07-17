@@ -5,6 +5,8 @@ import { TimePickerComponent } from '@syncfusion/ej2-react-calendars';
 import { RecurrenceEditorComponent } from "@syncfusion/ej2-react-schedule";
 import { notification, Button } from "antd";
 import api from '../../../resources/api'
+
+
 const EditorTemplate = props => {
 
   let options = []
@@ -12,9 +14,9 @@ const EditorTemplate = props => {
   useEffect(()=>{
     async function fetchData(){
       res =  await api.get('matter/viewforuser/'+props.userId)
-      console.log(res)
       setdata()
     }
+  
     fetchData()
   },[])
   const setdata = ()=>{
@@ -23,8 +25,6 @@ const EditorTemplate = props => {
     })
   }
   function onChange(args){
-    console.log("date")
-    console.log(args.itemData.value)
     {/*
     if(args.itemData.value==='via Email'){
 
@@ -43,7 +43,6 @@ const EditorTemplate = props => {
     } */}
     
   }
-  console.log(props)
   return props !== undefined ? (
     <table
       className="custom-event-editor"
@@ -94,7 +93,7 @@ const EditorTemplate = props => {
                     <td colSpan={4}>
                     <label>
                       <input type="checkbox" id="allday" name="allday" data-name="AllDay"
-                      onChange={props.handleChange}
+                      onChange={props.handleChange} defaultChecked = {props.Allday}
                         //onChange={() => setChecked(!checked)}
                       />
                       All day
@@ -102,7 +101,7 @@ const EditorTemplate = props => {
              
                     <label>
                       <input type="checkbox" id="repeat" name="repeat" data-name="Repeat"
-                        onChange={props.handleChange}
+                        onChange={props.handleChange} defaultChecked = {props.Repeat}
                         //onChange={() => setChecked(!checked)}
                       />
                       Repeat
@@ -116,6 +115,7 @@ const EditorTemplate = props => {
             <input
               onChange={props.handleChange}
               id="location"
+              placeholder={props.location || props.Location}
               className="e-field e-input"
               data-name="Location"
               type="text"
@@ -132,6 +132,7 @@ const EditorTemplate = props => {
               placeholder="Choose status"
               data-name="Matter"
               change={props.DateTimeChange}
+              placeholder={props.matter|| props.Matter}
               className="e-field"
               data-name="Matter"
               style={{ width: "100%" }}
@@ -145,6 +146,7 @@ const EditorTemplate = props => {
           <td colSpan={4}>
             <textarea
              onChange={props.handleChange}
+              placeholder={props.Description || props.description}
               id="description"
               className="e-field e-input"
               name="Description"
@@ -163,7 +165,7 @@ const EditorTemplate = props => {
                   <td className="e-textlabel">Remind via : </td>
                     <td colSpan={4}>
                     <label>
-                      <input type="checkbox" id="email" name="email" data-name="email"
+                      <input type="checkbox" id="email" name="email" data-name="email" defaultChecked = {props.Email}
                         onChange={props.handleChange}
                         //onChange={() => setChecked(!checked)}
                       />
@@ -171,7 +173,7 @@ const EditorTemplate = props => {
                     </label>
              
                     <label>
-                      <input type="checkbox" id="notification" name="notification" data-name="Notification"
+                      <input type="checkbox" id="notification" name="notification" data-name="Notification" defaultChecked={props.Notification}
                         onChange={props.handleChange}
                         //onChange={() => setChecked(!checked)}
                       />
@@ -187,7 +189,7 @@ const EditorTemplate = props => {
           id="timeForReminder" 
           change={props.DateTimeChange}
           data-name="TimeForReminder"
-          value={new Date(props.timeForReminder || props.timeForReminder)}
+          value={props.timeForReminder || props.TimeForReminder}
           placeholder="Select a Time"
           className="e-field"  />
           </td>
