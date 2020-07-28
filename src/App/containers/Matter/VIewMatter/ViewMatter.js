@@ -3,21 +3,23 @@ import api from '../../../../resources/api';
 import { Card, Tabs, Button, Modal, Table, Upload, notification } from 'antd';
 import { number } from 'prop-types';
 import { Form, Row, Col } from 'react-bootstrap';
-
+import Communication from './communnication';
+import TaskFuntions from './Task';
+import Activity from './Activity';
 import 'jspdf-autotable';
 import Bills from './Bills';
 import Documents from './Documents';
+import Calendar from './Calendar';
+
 const { TabPane } = Tabs;
 
 function CompanyView(props) {
   let response = {};
-  let calendar = {};
-
+  const [desc, setdesc] = useState('');
+  const [Client, setClient] = useState('');
+  const [Amount, setAmount] = useState('0');
   const [state, setState] = useState({ visible: false });
-  const [client , setClient ] = useState({})
   const [contact, setContact] = useState([]);
-  const [Calendar, setCalendar] = useState([]);
-  const [Task, setTask] = useState([]);
   const [act, setAct] = useState([]);
   const [address, setAddress] = useState();
   const [events, setEvents] = useState();
@@ -31,7 +33,36 @@ function CompanyView(props) {
     async function fetchData() {
       await api.get('/matter/view/' + props.location.state.id).then((res) => {
         response = res.data;
-        console.log(response);
+        response.data.client =
+          response.data.client === null
+            ? {
+                _id: '',
+                updated_at: '',
+                created_at: '-',
+                userId: '-',
+                title: '-',
+                lastName: '-',
+                firstName: '',
+                __v: 0,
+                image: '',
+                customFields: [
+                  {
+                    Email: '-',
+                  },
+                ],
+                address: [],
+                website: [],
+                phone: [],
+                emailAddress: [],
+                company: ['-'],
+              }
+            : response.data.client;
+        setdesc(res.data.data.matterDescription);
+        setClient(
+          res.data.data.client.firstName + ' ' + res.data.data.client.lastName
+
+          // res.data.data.client
+        );
       });
       {
         /*
@@ -40,57 +71,11 @@ function CompanyView(props) {
                api.get('/activity/viewformatter/'+props.location.state.userId+props.location.state.id).then((res)=>{console.log(res)})
            })*/
       }
-      console.log(calendar);
       setValue();
     }
     fetchData();
   }, []);
 
-  useEffect(() => {
-    api.get('/tasks/fetchformatter/' + props.location.state.id).then((res) => {
-      console.log(res.data);
-      let tsk = [];
-      res.data.data.map((value, index) => {
-        tsk.push(
-          <Card title="Task" className="form-width mb-4">
-            <table class="table table-borderless">
-              <tbody>
-                <tr>
-                  <td className="border-0 py-2">
-                    <span className="table-span-dark">Date</span>
-                  </td>
-                  <td className="border-0 py-2">
-                    <span className="table-span-light">
-                      {value.dueDate.substring(0, 10)}
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border-0 py-2">
-                    <span className="table-span-dark">Task</span>
-                  </td>
-                  <td className="border-0 py-2">
-                    <span className="table-span-light">{value.taskName}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border-0 py-2">
-                    <span className="table-span-dark">Description</span>
-                  </td>
-                  <td className="border-0">
-                    <span className="table-span-light">
-                      {value.description}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </Card>
-        );
-      });
-      setTask(tsk);
-    });
-  }, []);
   useEffect(() => {
     api
       .get(
@@ -102,93 +87,17 @@ function CompanyView(props) {
       .then((res) => {
         let activity = [];
         res.data.data.map((val, index) => {
-          activity.push(
-            <Card
-              title={val.description}
-              style={{ width: '40%' }}
-              extra={
-                <div>
-                  <a href="#">Edit</a> <a href="#">Delete</a>{' '}
-                  <a href="#">Dublicate</a>
-                </div>
-              }
-            >
-              <table class="table table-borderless form-width">
-                <tbody>
-                  <tr>
-                    <td className="border-0 py-2">
-                      <span className="table-span-dark">Type</span>
-                    </td>
-                    <td className="border-0 py-2">
-                      <span className="table-span-light">{val.type}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="border-0 py-2">
-                      <span className="table-span-dark">Qty</span>
-                    </td>
-                    <td className="border-0 py-2">
-                      <span className="table-span-light">{val.qty}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="border-0 py-2">
-                      <span className="table-span-dark">Discription</span>
-                    </td>
-                    <td className="border-0 py-2">
-                      <span className="table-span-light">
-                        {val.description}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="border-0 py-2">
-                      <span className="table-span-dark">Rate</span>
-                    </td>
-                    <td className="border-0 py-2">
-                      <span className="table-span-light">{val.rate}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="border-0 py-2">
-                      <span className="table-span-dark">Billable</span>
-                    </td>
-                    <td className="border-0 py-2">
-                      <span className="table-span-light">
-                        {val.billable ? 'Yes' : 'NO'}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="border-0 py-2">
-                      <span className="table-span-dark">Date</span>
-                    </td>
-                    <td className="border-0 py-2">
-                      <span className="table-span-light">
-                        {val.date.substring(0, 10)}
-                      </span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="border-0 py-2">
-                      <span className="table-span-dark">Invoice Status</span>
-                    </td>
-                    <td className="border-0 py-2">
-                      <span className="table-span-light">
-                        {val.invoiceStatus}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </Card>
-          );
+          activity.push(val);
         });
+        console.log('activiviviviv', activity);
         setAct(activity);
       });
   }, []);
+
   const setValue = () => {
+    const amnt = window.localStorage.getItem('total');
+    setAmount(amnt);
+
     let data = [];
     //  setRealatedContacts(rcntct)
     response.data.relatedContacts.map(async (value, index) => {
@@ -245,40 +154,13 @@ function CompanyView(props) {
       );
       setContact(data);
     });
-    /*
-       let cal = []
-       calendar.data.data.map((value,index)=>{
-        cal.push(  <Card title="Calendar"  className="form-width mb-4">
-        <table class="table table-borderless">
-                <tbody>
-                    <tr>
-                        <td className="border-0 py-2"><span className="table-span-dark">Start</span></td>
-    <td className="border-0 py-2"><span className="table-span-light">{value.startTime}</span></td>
-                    </tr>
-                    <tr>
-                        <td className="border-0 py-2"><span className="table-span-dark">End</span></td>
-                        <td className="border-0 py-2"><span className="table-span-light">{value.endTime}</span></td>
-                    </tr>
-                    <tr>
-                        <td className="border-0 py-2"><span className="table-span-dark">Title</span></td>
-                        <td className="border-0"><span className="table-span-light">{value.title}</span></td>
-                    </tr>
-                    <tr>
-                        <td className="border-0 py-2"><span className="table-span-dark">Description</span></td>
-                        <td className="border-0 py-2"><span className="table-span-light">{value.description}</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </Card>)
-        setCalendar(cal)
-    })  
-        
-       */
+
     // setEvents(evnt)
     const adrs = response.data.client.address.map((value, index) => {
       return (
         <div className="table-span-light" key={index}>
           <p>{value.street}</p>
+          {console.log('data', response.data)}
           <p>{value.city}</p>
           <p>{value.state}</p>
           <p>{value.zipCode}</p>
@@ -290,18 +172,24 @@ function CompanyView(props) {
     const mail = response.data.client.emailAddress.map((value, index) => {
       return (
         <div className="table-span-light" key={index}>
-          <p>{value}</p>
+          <p>
+            {value.emailType} : {value.emailAddress}
+          </p>
         </div>
       );
     });
     const Num = response.data.client.phone.map((value, index) => {
       return (
         <div className="table-span-light" key={index}>
-          <p>{value.number}</p>
+          <p>
+            {console.log(value)}
+            {value.phoneType} : {value.phone}
+          </p>
         </div>
       );
     });
-    const fNAme = response.data.client.firstName +" "+ response.data.client.lastName ;
+    const fNAme =
+      response.data.client.firstName + ' ' + response.data.client.lastName;
     const IDx = response.data.client._id;
     setAddress(adrs);
     setID(IDx);
@@ -365,6 +253,44 @@ function CompanyView(props) {
   };
   return (
     <div>
+      <Card style={{ height: '110px' }}>
+        <div className="d-flex mb-3 example-parent">
+          <div className="mr-auto p-2 col-example">
+            <h4>{Client}</h4>
+            <p>{desc}</p>
+          </div>
+
+          <div className="p-2 col-example">
+            <Button
+              onClick={() =>
+                props.history.push('/edit/matter', props.location.state.id)
+              }
+              type="link"
+            >
+              Edit
+            </Button>
+            <Button
+              onClick={() =>
+                api
+                  .get('/matter/delete/' + props.location.state.id)
+                  .then(() => {
+                    notification.success({ message: 'Matter deleted.' });
+                    props.history.push(
+                      '/manage/matter',
+                      props.location.state.id
+                    );
+                  })
+                  .catch(() =>
+                    notification.error({ message: 'Failed to delete' })
+                  )
+              }
+              type="link"
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </Card>
       <Tabs defaultActiveKey="1" onChange={callback}>
         <TabPane tab="Dashboard" key="1" style={{ padding: '0px' }}>
           <Card
@@ -383,7 +309,7 @@ function CompanyView(props) {
                   <p>
                     <b>Outstanding Amount</b>
                   </p>
-                  <span>$347.00</span>
+                  <span>$500</span>
                 </div>
                 <div style={{ flex: 1 }}>
                   <p>
@@ -418,7 +344,7 @@ function CompanyView(props) {
                     <span className="table-span-dark">Phone</span>
                   </td>
                   <td className="border-0 py-2">
-                    <span className="table-span-light">{number}</span>
+                    <span className="table-span-light">{Number}</span>
                   </td>
                 </tr>
                 <tr>
@@ -483,21 +409,16 @@ function CompanyView(props) {
           </Modal>
         </TabPane>
         <TabPane tab="Acitivites" key="2">
-          <Card>
-            <p style={{ fontWeight: 'bold' }}>Activity</p>
-          </Card>
-          {act}
+          <Activity id={props.location.state.id}></Activity>
         </TabPane>
         <TabPane tab="Calendar" key="3">
-          {console.log(Calendar)}
-          {Calendar}
+          <Calendar
+            userId={props.location.state.userId}
+            matterId={props.location.state.id}
+          />
         </TabPane>
         <TabPane tab="Communication" key="4">
-          <Card
-            title="Communication"
-            extra={<a href="#"></a>}
-            className="form-width mb-4"
-          ></Card>
+          <Communication></Communication>
         </TabPane>
         <TabPane tab="Phone Log" key="5">
           <Card
@@ -514,6 +435,7 @@ function CompanyView(props) {
           ></Card>
         </TabPane>
         <TabPane tab="Document" key="7">
+          {console.log('matter in viw', props.location.state.matters)}
           <Documents
             matters={props.location.state.matters}
             userId={props.location.state.userId}
@@ -521,7 +443,7 @@ function CompanyView(props) {
           />
         </TabPane>
         <TabPane tab="Task" key="8">
-          {Task}
+          <TaskFuntions id={props.location.state.id}></TaskFuntions>
         </TabPane>
         <TabPane tab="Bills" key="9">
           <Bills dataSource={dataForBills} />
@@ -531,46 +453,3 @@ function CompanyView(props) {
   );
 }
 export default CompanyView;
-
-{
-  /* <Invoice
-              invoiceData={{ id: '644', status: 'due', date: '24/6/20' }}
-              companyData={{
-                logo: 'https://uilogos.co/img/logotype/hexa.png',
-                name: 'ABC Company',
-                address: '4354  Settlers Lane, New York',
-                phone: '917-821-3450',
-                email: 'w9lk6p927j@temporary-mail.net',
-              }}
-              clientData={{
-                name: 'M Salamanca',
-                address: '4354  Settlers Lane, New York',
-              }}
-              billData={[
-                {
-                  date: '12/12/12',
-                  attorney: 'AB',
-                  notes: 'dumpy data 1',
-                  rate: '21',
-                  hours: '1.4',
-                  total: '16',
-                },
-                {
-                  date: '12/12/12',
-                  attorney: 'AB',
-                  notes: 'dumpy data 2',
-                  rate: '120',
-                  hours: '1',
-                  total: '17',
-                },
-                {
-                  date: '12/12/20',
-                  attorney: 'AB',
-                  notes: 'dumpy data 3',
-                  rate: '120',
-                  hours: '1',
-                  total: '12',
-                },
-              ]}
-            /> */
-}
