@@ -32,19 +32,109 @@ class EmailForm extends React.Component{
     }
 
     render(){
-
-       return     <Form >
+       
+    
+       return    this.props.editMode ?
+       <Form >
+        <Row>
+            
+            <Col>
+            <Form.Group>
+        <Form.Label>Matter</Form.Label>
+               <Form.Control 
+                   as="select"
+                   name="matter" 
+                   defaultValue = {this.props.record.matter}
+                   onChange={this.props.handleChange}>
+               <option>Select a matter</option>
+               {this.state.option}
+               </Form.Control>
+        </Form.Group>
+            </Col>
+        </Row>
+      
+       <Row>
+           <Col >
+           <Form.Group>
+                <Form.Label>From</Form.Label>
+                <Form.Control 
+                    as="select"
+                    name="from" 
+                    defaultValue = {this.props.record.from}
+                    onChange={this.props.handleChange}>
+                    <option>Select a contact</option>    
+                {this.state.contacts}
+                </Form.Control>
+                </Form.Group>
+           </Col>
+           
+           <Col>
+           <Form.Group >
+                <Form.Label>To</Form.Label>
+                <Form.Control 
+                    as="select"
+                    name="to" 
+                    defaultValue = {this.props.record.to}
+                    onChange={this.props.handleChange}>
+                    <option>Select a contact</option>
+                    {this.state.contacts}
+                </Form.Control>
+                </Form.Group>
+           </Col>
+       </Row>
         <Row>
             <Col>
-            <Form.Group controlId="duration">
-               <Form.Label>Duration</Form.Label>
+            <Form.Group controlId="date">
+               <Form.Label>Time</Form.Label>
                <Form.Control 
-               type="text" 
+               required
+               type="time" 
                name="time" 
-               placeholder="hh:mm" 
+               defaultValue = {this.props.record.time}
                onChange={this.props.handleChange}/>
            </Form.Group>
             </Col>
+            <Col>
+            <Form.Group controlId="date">
+               <Form.Label>Date</Form.Label>
+               <Form.Control 
+               required
+               type="date" 
+               name="date" 
+               defaultValue = {this.props.record.date} 
+               onChange={this.props.handleChange}/>
+           </Form.Group>
+            </Col>
+
+        </Row>
+      
+       <Form.Group controlId="subject">
+                <Form.Label>Subject</Form.Label>
+                <Form.Control 
+                name="subject" 
+                rows="3"
+                defaultValue = {this.props.record.subject}
+                onChange={this.props.handleChange} />
+            </Form.Group>  
+    
+       
+            <Form.Group controlId="body">
+                <Form.Label>Body</Form.Label>
+                <Form.Control 
+                name="body" 
+                as="textarea" 
+                rows="3"
+                defaultValue = {this.props.record.body}
+                onChange={this.props.handleChange} />
+            </Form.Group>
+       
+    
+   </Form>    
+   
+       :
+       <Form >
+        <Row>
+            
             <Col>
             <Form.Group>
         <Form.Label>Matter</Form.Label>
@@ -69,7 +159,8 @@ class EmailForm extends React.Component{
                     name="from" 
                     placeholder="Select a contact"
                     onChange={this.props.handleChange}>
-                <option>Select a contact</option>
+               <option>Select a contact</option>    
+              {this.state.contacts}
                 </Form.Control>
                 </Form.Group>
            </Col>
@@ -91,12 +182,12 @@ class EmailForm extends React.Component{
         <Row>
             <Col>
             <Form.Group controlId="date">
-               <Form.Label>time</Form.Label>
+               <Form.Label>Time</Form.Label>
                <Form.Control 
                required
                type="time" 
-               name="date" 
-               placeholder="Date" 
+               name="time" 
+               placeholder="Time" 
                onChange={this.props.handleChange}/>
            </Form.Group>
             </Col>
@@ -136,7 +227,8 @@ class EmailForm extends React.Component{
        
     
    </Form>    
-    }
+    
+        }
 }
 
 const mapStateToProps = state => ({
