@@ -1,26 +1,26 @@
-import React from 'react'
+import React, {useState, useEffect} from 'react';
 //import Content from './Content/Content'
+import { Table } from 'antd';
+import api from '../../../../resources/api';
+function CompletedTask(props) {
 
-function CompletedTask(props){
-    const tableData = props.tableData 
-    return <div>
-    <table class="table">
-      <thead class="thead-light">
-        <tr>
-          <th scope="col">Date</th>
-          <th scope="col">Discription</th>
-          <th scope="col">Task</th>
-          <th scope="col">Matter</th>
-          <th scope="col">Edit</th>
-          <th scope="col">Delete</th>
-        </tr>
-      </thead>
-      <tbody>
-        {tableData}
-      </tbody>
-  </table>
-  </div>     
-    
+  const [state, setState] = useState([])
 
+  useEffect(() => {
+    api.get('/tasks/showall')
+    .then((res)=> {
+      console.log(res.data.data) 
+      const newdata = res.data.data.filter(function( obj ) {
+          return obj.status == true;
+        });
+      setState([...state, ...newdata])
+    })
+  }, []);
+
+  return (
+    <div>
+      <Table columns={props.columns} dataSource={state} />
+    </div>
+  );
 }
-export default CompletedTask
+export default CompletedTask;
