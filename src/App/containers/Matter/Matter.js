@@ -1,45 +1,215 @@
 import React from 'react';
-import { Table, Button, Input, Space, notification } from 'antd';
+import {
+  Table,
+  Button,
+  Input,
+  Space,
+  notification,
+  Popconfirm,
+  Card,
+} from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
 import Highlighter from 'react-highlight-words';
 import api from '../../../resources/api';
 import { connect } from 'react-redux';
+import ExportExcel from './ExcelExport';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 let response = {};
 let tableData = [];
-
 class matterManage extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       data: {},
       tableData: [],
       searchData: [],
+      showSearchMatter: false,
+      showSearchClient: false,
+      showSearchPractise: false,
+      value: '',
+      finalData: [],
     };
+    this.filterByMatterInput = this.filterByMatterInput.bind(this);
   }
-
   async componentDidMount() {
-    const data = [];
+    let data = [];
+    let open = [];
+    let closed = [];
+    let pending = [];
     await api
       .get('/matter/viewforuser/' + this.props.userId)
       .then((res) => (response = res.data.data));
+    console.log(response);
     response.map((value, index) => {
       let newData = {
         key: index,
         id: value._id,
         matterDescription: value.matterDescription,
-        Client: value.client,
-        PractiseArea: value.practiseArea,
-        OpenDate: value.openDate,
+        Client:
+          value.client !== null
+            ? value.client.firstName + ' ' + value.client.lastName
+            : '-',
+        PractiseArea: value.practiseArea ? value.practiseArea : '-',
+        OpenDate: value.openDate ? value.openDate : '-',
       };
+      if (value.status === 'Open') {
+        open.push(newData);
+      } else if (value.status === 'Closed') {
+        closed.push(newData);
+      } else if (value.status === 'Pending') {
+        pending.push(newData);
+      }
       data.push(newData);
     });
     if (this.state.tableData != []) {
-      this.setState({ tableData: data });
+      this.setState({
+        tableData: data,
+        open: open,
+        closed: closed,
+        pending: pending,
+        all: data,
+      });
     }
   }
+  filterByMatterInput = () => (
+    <div>
+      <SearchOutlined
+        onClick={() => {
+          this.state.showSearchMatter === false
+            ? this.setState({
+                ...this.state,
+                showSearchMatter: true,
+                showSearchClient: false,
+                showSearchPractise: false,
+              })
+            : this.setState({ ...this.state, showSearchMatter: false });
+        }}
+      />
+      <span> Matter Description </span>
 
+      <div>
+        {this.state.showSearchMatter && (
+          <input
+            placeholder="Search Matter "
+            value={this.state.value}
+            onChange={(e) => {
+              let filteredData = [];
+              this.setState({ value: e.target.value });
+              if (e.target.value.length !== 0 || e.target.value === '') {
+                filteredData = this.state.tableData.filter(
+                  (item) =>
+                    item.matterDescription !== undefined &&
+                    item.matterDescription
+                      .toLowerCase()
+                      .includes(e.target.value.toLowerCase())
+                );
+                this.setState({ finalData: filteredData });
+              } else {
+                this.setState({
+                  finalData: this.state.tableData,
+                });
+              }
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+  filterByClientInput = () => (
+    <div>
+      <SearchOutlined
+        onClick={() => {
+          this.state.showSearchClient === false
+            ? this.setState({
+                ...this.state,
+                showSearchClient: true,
+                showSearchPractise: false,
+                showSearchMatter: false,
+              })
+            : this.setState({ ...this.state, showSearchClient: false });
+        }}
+      />
+      <span> Client </span>
+
+      <div>
+        {this.state.showSearchClient && (
+          <input
+            placeholder="Search Client "
+            value={this.state.value}
+            onChange={(e) => {
+              let filteredData = [];
+              this.setState({ value: e.target.value });
+
+              if (e.target.value.length !== 0 || e.target.value === '') {
+                filteredData = this.state.tableData.filter(
+                  (item) =>
+                    item.Client !== undefined &&
+                    item.Client.toLowerCase().includes(
+                      e.target.value.toLowerCase()
+                    )
+                );
+                this.setState({ finalData: filteredData });
+              } else {
+                this.setState({
+                  finalData: this.state.tableData,
+                });
+              }
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+  filterByPractiseInput = () => (
+    <div>
+      <SearchOutlined
+        onClick={() => {
+          this.state.showSearchPractise === false
+            ? this.setState({
+                ...this.state,
+                showSearchPractise: true,
+                showSearchClient: false,
+
+                showSearchMatter: false,
+              })
+            : this.setState({ ...this.state, showSearchPractise: false });
+        }}
+      />
+      <span> Practise Area </span>
+
+      <div>
+        {this.state.showSearchPractise && (
+          <input
+            placeholder="Search Practise Area "
+            value={this.state.value}
+            onChange={(e) => {
+              let filteredData = [];
+              this.setState({ value: e.target.value });
+
+              if (e.target.value.length !== 0 || e.target.value === '') {
+                filteredData = this.state.tableData.filter(
+                  (item) =>
+                    item.PractiseArea !== undefined &&
+                    item.PractiseArea.toLowerCase().includes(
+                      e.target.value.toLowerCase()
+                    )
+                );
+                this.setState({ finalData: filteredData });
+              } else {
+                this.setState({
+                  finalData: this.state.tableData,
+                });
+              }
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
   render() {
     //Search Related
 
@@ -53,75 +223,6 @@ class matterManage extends React.Component {
     fetchData();
   }, []);
  */
-
-    const getColumnSearchProps = (dataIndex) => ({
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            ref={(node) => {
-              // console.log('Node',node)
-            }}
-            placeholder={`Search ${dataIndex}`}
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-              icon={<SearchOutlined />}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Search
-            </Button>
-            <Button
-              onClick={() => handleReset(clearFilters)}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
-        </div>
-      ),
-      filterIcon: (filtered) => (
-        <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-      ),
-      onFilter: (value, record) => {
-        console.log(dataIndex, record);
-        return record[dataIndex]
-          .toString()
-          .toLowerCase()
-          .includes(value.toLowerCase());
-      },
-
-      onFilterDropdownVisibleChange: (visible) => {
-        if (visible) {
-          // setTimeout(() => this.searchInput.select());
-        }
-      },
-      render: (text) =>
-        this.state.searchedColumn === dataIndex ? (
-          <Highlighter
-            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-            searchWords={[this.state.searchText]}
-            autoEscape
-            textToHighlight={text.toString()}
-          />
-        ) : (
-          text
-        ),
-    });
 
     //   const handleciSelect = (record) => {
     //     // dispatch(selectBlog(record))
@@ -149,46 +250,50 @@ class matterManage extends React.Component {
 
     const columns = [
       {
-        title: 'Matter Description',
+        title: this.filterByMatterInput,
         dataIndex: 'matterDescription',
         key: '_id',
-        defaultSortOrder: 'descend',
-        ...getColumnSearchProps('matterDescription'),
-        sorter: (a, b, c) =>
-          c === 'ascend'
-            ? a.description < b.description
-            : a.description > b.description,
+        render: (text) => (
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[this.state.value]}
+            autoEscape
+            textToHighlight={text ? text.toString() : ''}
+          />
+        ),
       },
       {
-        title: 'Client',
+        title: this.filterByClientInput,
         dataIndex: 'Client',
         key: '_id',
-        defaultSortOrder: 'ascend',
-        ...getColumnSearchProps('Client'),
-        sorter: (a, b, c) =>
-          c === 'ascend'
-            ? a.shortDescription < b.shortDescription
-            : a.shortDescription > b.shortDescription,
+        render: (text) => (
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[this.state.value]}
+            autoEscape
+            textToHighlight={text ? text.toString() : ''}
+          />
+        ),
       },
       {
-        title: 'Practise Area',
+        title: this.filterByPractiseInput,
         dataIndex: 'PractiseArea',
         key: '_id',
-        ...getColumnSearchProps('PractiseArea'),
-        sorter: (a, b, c) =>
-          c === 'ascend'
-            ? a.shortDescription < b.shortDescription
-            : a.shortDescription > b.shortDescription,
+        render: (text) => (
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[this.state.value]}
+            autoEscape
+            textToHighlight={text ? text.toString() : ''}
+          />
+        ),
       },
       {
         title: 'Open Date',
         dataIndex: 'OpenDate',
         key: '_id',
-        ...getColumnSearchProps('OpenDate'),
-        sorter: (a, b, c) =>
-          c === 'ascend'
-            ? a.shortDescription < b.shortDescription
-            : a.shortDescription > b.shortDescription,
+        sortDirections: ['descend', 'ascend'],
+        sorter: (a, b) => a.OpenDate.length - b.OpenDate.length,
       },
       {
         title: 'Edit',
@@ -208,37 +313,18 @@ class matterManage extends React.Component {
         key: '_id',
         render: (_, record) => {
           return (
-            <Button variant="danger" onClick={() => handleDelete(record)}>
-              Delete
-            </Button>
+            <Popconfirm
+              title="Are you sure delete this matter?"
+              onConfirm={() => handleDelete(record)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button danger>Delete</Button>
+            </Popconfirm>
           );
         },
       },
     ];
-
-    const handleSearch = (selectedKeys, confirm, dataIndex) => {
-      const newSearchData = [];
-      this.state.tableData.map((value, index) => {
-        if (value[dataIndex] == selectedKeys) {
-          let newdata = {
-            key: index,
-            matterDescription: value.matterDescription,
-            Client: value.Client,
-            PractiseArea: value.PractiseArea,
-            OpenDate: value.OpenDate,
-          };
-          newSearchData.push(newdata);
-        }
-      });
-
-      this.setState({ tableData: newSearchData });
-    };
-
-    const handleReset = (clearFilters) => {
-      clearFilters();
-      this.setState({ searchText: '' });
-      this.setState({ tableData: tableData, searchData: [] });
-    };
 
     const handleView = (rec) => {
       let data = {};
@@ -248,19 +334,112 @@ class matterManage extends React.Component {
       this.props.history.push('/view/matter', data);
     };
 
+    const setTable = (type) => {
+      if (type === 'All') {
+        this.setState({ tableData: this.state.all });
+      } else if (type === 'open') {
+        this.setState({ tableData: this.state.open });
+      } else if (type === 'closed') {
+        this.setState({ tableData: this.state.closed });
+      } else if (type === 'pending') {
+        this.setState({ tableData: this.state.pending });
+      }
+    };
+    const exportPDF = () => {
+      const unit = 'pt';
+      const size = 'A4'; // Use A1, A2, A3 or A4
+      const orientation = 'portrait'; // portrait or landscape
+
+      const marginLeft = 40;
+      const doc = new jsPDF(orientation, unit, size);
+
+      doc.setFontSize(15);
+
+      const title = 'Matters';
+      const headers = [
+        ['S.N', 'Matter', 'Client', 'Practice Area', 'Open Date'],
+      ];
+
+      let data = [];
+      this.state.tableData.map((value, index) => {
+        const td = [
+          index + 1,
+          value.matterDescription,
+          value.Client,
+          value.practiseArea ? value.practiseArea : '-',
+          value.openDate ? value.openDate : '-',
+        ];
+        data.push(td);
+      });
+
+      let content = {
+        startY: 50,
+        head: headers,
+        body: data,
+      };
+
+      doc.text(title, marginLeft, 40);
+      doc.autoTable(content);
+      doc.save('matters.pdf');
+    };
+    const Add = (
+      <div className="d-flex justify-content-center">
+        <button
+          className="ml-auto btn  btn-outline-primary   btn-sm"
+          onClick={exportPDF}
+        >
+          Export to Pdf
+        </button>
+        <ExportExcel dataSource={this.state.tableData} />
+        <button
+          className="ml-auto btn  btn-outline-primary   btn-sm"
+          onClick={() => handleAddNew()}
+        >
+          Add Matter
+        </button>
+      </div>
+    );
     return (
-      <div>
-        <div className="p-2 ">
+      <Card title="Matter" extra={Add}>
+        <div>
+          <span className="ml-auto"></span>
           <Button
-            className="ml-auto"
-            color="success"
-            onClick={() => handleAddNew()}
+            onClick={() => {
+              setTable('All');
+            }}
           >
-            Add Matter
+            All
+          </Button>
+          <Button
+            onClick={() => {
+              setTable('open');
+            }}
+          >
+            Open
+          </Button>
+          <Button
+            onClick={() => {
+              setTable('pending');
+            }}
+          >
+            Pending
+          </Button>
+          <Button
+            onClick={() => {
+              setTable('closed');
+            }}
+          >
+            Closed
           </Button>
         </div>
+        <br></br>
+
         <Table
-          dataSource={this.state.tableData}
+          dataSource={
+            this.state.finalData.length === 0 && this.state.value.length === 0
+              ? this.state.tableData
+              : this.state.finalData
+          }
           columns={columns}
           onRow={(record, rowIndex) => {
             return {
@@ -271,7 +450,7 @@ class matterManage extends React.Component {
             };
           }}
         ></Table>
-      </div>
+      </Card>
     );
   }
 }
