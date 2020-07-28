@@ -56,6 +56,7 @@ const GoogleMap = React.lazy(() => import('./Demo/Maps/GoogleMap/index'));
 const OtherSamplePage = React.lazy(() => import('./Demo/Other/SamplePage'));
 const OtherDocs = React.lazy(() => import('./Demo/Other/Docs'));
 const tasks = React.lazy(() => import('./App/containers/Tasks/index'));
+const list = React.lazy(() => import('./App/containers/Tasks/List/viewList/listView'));
 const Profile = React.lazy(() => import('./App/containers/Profile'));
 const Login = React.lazy(() => import('./App/containers/Auth/Login'));
 // const Calendar = React.lazy(()=> import('./Demo/Calendar/CalendarElements'));
@@ -92,9 +93,7 @@ const Activity = React.lazy(() =>
 const AddMatter = React.lazy(() =>
   import('./App/components/AddEditMatter/AddMatter')
 );
-const Invoice = React.lazy(() =>
-  import('./App/components/Invoice/Invoice')
-);
+const Invoice = React.lazy(() => import('./App/components/Invoice/Invoice'));
 const EditMatter = React.lazy(() =>
   import('./App/components/AddEditMatter/EditMatter')
 );
@@ -116,6 +115,9 @@ const accountNpayment = React.lazy(() =>
 );
 const AddAccount = React.lazy(() =>
   import('./App/components/AddEditAccount/AddAccount')
+);
+const EditAccount = React.lazy(() =>
+  import('./App/components/AddEditAccount/EditAccount')
 );
 const profile = React.lazy(() =>
   import('./App/containers/Settings/profile/index')
@@ -203,8 +205,6 @@ export const adminRoutes = [
   // { path: '/sample-page', exact: true, name: 'Sample Page', component: OtherSamplePage },
   // { path: '/docs', exact: true, name: 'Documentation', component: OtherDocs },
   // { path: '/calendar', exact: true, name: 'Calendar', component: CalendarContainer}
-
-  ,
 ];
 const routes = [
   {
@@ -214,6 +214,7 @@ const routes = [
     component: DashboardDefault,
   },
   { path: '/tasks', exact: true, name: 'Tasks', component: tasks },
+  { path: '/tasks/view/list', exact: true, name: 'View List', component: list },
   { path: '/profile', exact: true, name: 'Profile', component: Profile },
   {
     path: '/basic/button',
@@ -344,10 +345,7 @@ const routes = [
     name: 'Invoice',
     component: Invoice,
   },
-  { path: '/settings', 
-    exact: true, 
-    name: 'Settings', 
-    component: Settings },
+  { path: '/settings', exact: true, name: 'Settings', component: Settings },
   {
     path: '/settings/customFeilds',
     exact: true,
@@ -404,10 +402,16 @@ const routes = [
   },
   { path: '/accounts', exact: true, name: 'Accounts', component: Accounts },
   {
-    path: '/accounts/add',
+    path: '/add/accounts',
     exact: true,
     name: 'Add Accounts',
     component: AddAccount,
+  },
+  {
+    path: '/edit/accounts',
+    exact: true,
+    name: 'Edit Account',
+    component: EditAccount,
   },
   { path: '/documents', exact: true, name: 'Documents', component: Documents },
   {
