@@ -1,9 +1,19 @@
 import React from 'react'
 import { Table , Button, Modal , Card, notification, Space, Popconfirm } from 'antd'
+import { useSelector, connect } from 'react-redux';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Emailform from './form/emailform'
+import PhoneLog from './form/phoneLog'
 import api from '../../../resources/api'
+
+let timeError = "" ;
+let matters = {};
+let communication = {};
+let contact = {}
+const user = JSON.parse(window.localStorage.getItem('Case.user'))
+const name = user.token.user.firstName + " " + user.token.user.lastName;
+console.log(user.token.user)
 
 class Communication extends React.Component{
     constructor(props){
@@ -14,9 +24,89 @@ class Communication extends React.Component{
             tableData : [],
             data : {
                 subject : "",
-                body : ""
-            }
+                body : "",
+                from : user.token.user._id
+            },
+            emailData : [],
+            phoneData : [],
+            completeData : [],
+            tableData : [],
+            editmode : false
+        
         }
+    }
+    convertTime = (serverdate) => {
+      var date = new Date(serverdate);
+      // convert to utc time
+      var toutc = date.toUTCString();
+      //convert to local time
+      var locdat = new Date(toutc + ' UTC');
+      return locdat;
+    };
+    componentDidMount() {
+
+      api.get('/matter/viewforuser/' + this.props.userId).then((res) => {
+        matters = res;
+      });
+      api.get('/contact/viewforuser/' + this.props.userId).then((res) => {
+        contact = res;
+      });
+    
+      api.get('/communication/viewforuser/' + this.props.userId).then((res) => {
+        communication = res.data.data;
+       console.log(communication)
+
+        let emailData = [];
+        let phoneData = [];
+        let completeData = [];
+        
+        res.data.data.map((val, index) => {
+          
+          const date = this.convertTime(val.date);
+          const temp = {
+            key: index,
+            logType: val.logType,
+            id: val._id,
+            addTime : val.addTime ? val.addTime : "-",
+            time: val.time ? val.time : '',
+            matter: val.matter ? val.matter.matterDescription : '-',
+            from: val.from ? val.from.firstName + " " + val.from.lastName  : '-',
+            to: val.to ? val.to.firstName + " " + val.to.lastName  : '-',
+            subject: val.subject ? val.subject : '-',
+            body: val.body,
+            date: date          
+          };
+          if (val.logType === 'email') {
+            emailData.push(temp);
+          }
+          if (val.logType === 'phone') {
+            phoneData.push(temp);
+          }
+          
+          completeData.push(temp);
+        });
+        this.setState({
+          completeData: completeData,
+          phoneData: phoneData,
+          emailData: emailData,
+          tableData: completeData,
+        });
+      });
+      /*
+      const time = window.localStorage.getItem('timer');
+      let hours = Math.floor(time / 3600);
+      let minutes = Math.floor(time / 60);
+      if (minutes >= 59) {
+        minutes = minutes % 60;
+      }
+  
+      //   const Seconds = time % 60;
+      const data = this.state.data;
+      data.time = hours + ':' + minutes;
+      this.setState({ data: data, touched: true });
+      console.log(this.state);
+      */
+
     }
     showModal = (type) => {
         if(type==="email"){
@@ -34,13 +124,115 @@ class Communication extends React.Component{
     
       handleOk = type => {    
         notification.destroy()
+        if (timeError !== '') {
+          notification.error({ message: 'Invalid time' });
+        }else
         if(this.state.data.subject == ""){
             notification.error({message : "Please add a subject"})
         }else
         if(this.state.data.body == ""){
-            notification.error({message : "Please add a subject"})
+            notification.error({message : "Please add a body"})
         }else{
-            this.setState({email : false, phone : false})
+            if(this.state.editmode){
+
+              let data = this.state.data
+              data.from = user.token.user._id
+            if(type === "email"){
+              data.logType = "email"
+              this.setState({email : false})
+            }else
+            if(type === "phone"){
+              data.logType = "phone"
+              this.setState({phone : false})
+            }
+            data.userId = this.props.userId;
+            console.log(data)
+            api
+              .post('/communication/edit/'+this.state.data.id, data)
+              .then((res) => {
+                console.log(res)
+                const newData = this.state.tableData
+                newData.push(res.data.data)
+                this.setState({tableData : newData, data : {
+                  subject : "",
+                  body : "",
+                  from : user.token.user._id
+              }})
+                notification.success({ message: 'Log Edited !' });
+              })
+              .catch((err) => {
+                notification.error({ message: 'Failed' });
+              })
+              .then(() => {
+              
+                /*
+                this.setState({
+                  timeModal: false,
+                  editmode: false,
+                  data: {
+                    billable: true,
+                    nonBillable: false,
+                    date: '',
+                    qty: '1.0',
+                    rate: '',
+                    invoice: 'Unbilled',
+                  },
+                });
+                */
+               
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1500)
+              });
+  
+
+            }else{
+              let data = this.state.data
+            if(type === "email"){
+              data.logType = "email"
+              this.setState({email : false})
+            }else
+            if(type === "phone"){
+              data.logType = "phone"
+              this.setState({phone : false})
+            }
+            data.userId = this.props.userId;
+            console.log(data)
+            api
+              .post('/communication/create', data)
+              .then((res) => {
+                console.log(res)
+                const newData = this.state.tableData
+                newData.push(res.data.data)
+                this.setState({tableData : newData})
+                notification.success({ message: 'Log Added !' });
+              })
+              .catch((err) => {
+                notification.error({ message: 'Failed' });
+              })
+              .then(() => {
+              
+                /*
+                this.setState({
+                  timeModal: false,
+                  editmode: false,
+                  data: {
+                    billable: true,
+                    nonBillable: false,
+                    date: '',
+                    qty: '1.0',
+                    rate: '',
+                    invoice: 'Unbilled',
+                  },
+                });
+                */
+               
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1500)
+              });
+  
+            }
         }   
       };
     
@@ -48,6 +240,12 @@ class Communication extends React.Component{
         if(type==="email"){
             this.setState({
                 email : false,
+                editmode: false,
+                data : {
+                  subject : "",
+                  body : "",
+                  from : name
+              },
          
               });
               console.log(this.state)
@@ -55,40 +253,123 @@ class Communication extends React.Component{
         if(type==="phone"){
             this.setState({
                 phone : false,
+                editmode: false,
+                data : {
+                  subject : "",
+                  body : "",
+                  from : name
+              },
               });
               console.log(this.state)
-             
+        
         }
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+        
        
       
       };
 
     render(){
+      const handleChange = (e) => {
+        e.persist();
+        this.setState({ touched: false });
+        const { name, id, value, selectedIndex } = e.target;
+        let newData = this.state.data;
+
+        if (name === 'matter') {
+          console.log("inside matter")
+          if (selectedIndex >= 1) {
+            console.log(matters.data.data[selectedIndex - 1]._id)
+            newData[name] = matters.data.data[selectedIndex - 1]._id;
+            console.log("inside matter > 1 ")
+          } else {
+            newData[name] = '';
+            console.log("inside matte.....r")
+          }
+
+        }else
+        if (name === 'to' || name === 'from') {
+          console.log(matters)
+          if (selectedIndex >= 1) {
+            newData[name] = contact.data.data[selectedIndex - 1]._id;
+          } else {
+            newData[name] = '';
+          }
+
+        } else 
+        if (name === 'addTime') {
+            timeError = '';
+            var timeValue = value;
+            if (timeValue == '' || timeValue.indexOf(':') < 0) {
+              timeError = 'Inavlid Time';
+              console.log(timeError);
+            } else {
+              var sHours = timeValue.split(':')[0];
+              var sMinutes = timeValue.split(':')[1];
+              var sSeconds = timeValue.split(':')[1];
+
+              
+    
+              if (sHours == '' || isNaN(sHours) /*|| parseInt(sHours)>23 */) {
+                timeError = 'Inavlid Time';
+                console.log(timeError);
+              } else if (parseInt(sHours) == 0) sHours = '00';
+              else if (sHours < 10) sHours = '0' + sHours;
+    
+              if (sMinutes == '' || isNaN(sMinutes) || parseInt(sMinutes) > 59) {
+                timeError = 'Inavlid Time';
+                console.log(timeError);
+              } else if (parseInt(sMinutes) == 0) sMinutes = '00';
+              else if (sMinutes < 10) sMinutes = '0' + sMinutes;
+
+              if (sSeconds == '' || isNaN(sSeconds) || parseInt(sSeconds) > 59) {
+                timeError = 'Inavlid Time';
+                console.log(timeError);
+              } /*else if (parseInt(sSeconds) == 0) sSeconds = '00';
+              else if (sSeconds < 10) sSeconds = '0' + sSeconds;
+    
+              timeValue = sHours + ':' + sMinutes + ':' + sSeconds;*/
+            }
+            newData[name] = timeValue;
+            this.setState({ data: newData });
+          } 
+        else 
+        {
+            console.log("inside last")
+            newData[name] = value;
+            this.setState({ data: newData });
+          }
+    
+        console.log(this.state);
+      };
         const handleEdit = record => {
-            /*
-            if(record.type==="time"){
+            
+            if(record.logType==="email"){
               this.setState({
                 editmode : true,
-                  timeModal : true,
+                  email : true,
                   data : record ,
                 });
-          }else
-          if(record.type==="expense"){
+            }else
+            if(record.logType==="phone"){
               this.setState({
                 editmode : true,
-                  expenseModal : true,
+                  phone : true,
                   data : record  
                 });
-          }
-          */
-                
             }
+        
+                
+          }
             
             const handleDelete = record => {
-                /*
-              api.get('/activity/delete/'+record.id).then((res)=>{
+            
+              api.get('/communication/delete/'+record.id).then((res)=>{
   
-                notification.success({message : "Activity Deleted !"})
+                notification.success({message : "Log Deleted !"})
                 setTimeout(()=>{
                   window.location.reload()
                 },1500)
@@ -96,39 +377,50 @@ class Communication extends React.Component{
     
                 notification.error({message : "Failed to delete"})
               })
-              */
+              
             }
         const setTableData = (type)=>{
-            if(type==="time"){
-             
+            if(type==="email"){
+              this.setState({
+                tableData: this.state.emailData,
+              });
            }else
-           if(type==="expense"){
-              
+           if(type==="phone"){
+            this.setState({
+              tableData: this.state.phoneData,
+            });
             }else
             if(type==="all"){
-             
+              this.setState({
+                tableData: this.state.completeData,
+              });
             }
           }
         const columns = [
             {
                 title: 'Hours',
-                dataIndex: 'hours',
-                key: 'hours',
+                dataIndex: 'addTime',
+                key: 'addTime',
               },
             {
               title: 'Type',
-              dataIndex: 'type',
-              key: 'type',
+              dataIndex: 'logType',
+              key: 'logType',
             },
             {
-              title: 'Date and time',
-              dataIndex: 'dateAndTime',
-              key: 'dateAndTime',
+              title: 'Time',
+              dataIndex: 'time',
+              key: 'time',
             },
             {
-              title: 'Subject, body, attachment',
-              dataIndex: 'attachment',
-              key: 'attachment',
+              title: 'Date',
+              dataIndex: 'date',
+              key: 'date',
+            },
+            {
+              title: 'Subject',
+              dataIndex: 'subject',
+              key: 'subject',
             },
             {
                 title: 'Matter',
@@ -216,7 +508,7 @@ class Communication extends React.Component{
         <br></br>
         <br></br>
         
-        <Card title="Activities" bodyStyle={{"padding": "14px 10px 0px 10px"}}extra={<span style={{float : "right"}}>
+        <Card title="Communication" bodyStyle={{"padding": "14px 10px 0px 10px"}}extra={<span style={{float : "right"}}>
             <Button className='ml-auto' color='success' onClick={exportPDF}>Export</Button>
             <Button onClick={()=>this.showModal("email")}>New email log</Button>
             <Button onClick={()=>this.showModal("phone")}>New phone log</Button>
@@ -239,7 +531,7 @@ class Communication extends React.Component{
             onOk={()=>this.handleOk("email")}
             onCancel={()=>this.handleCancel("email")}
             >
-            <Emailform></Emailform>
+            <Emailform from={name} record={this.state.data} editmode={this.state.editmode} handleChange={handleChange}></Emailform>
        {/*     <TimeForm  record={this.state.data} editmode={this.state.editmode} handleChange={handleChange}></TimeForm> */}
         </Modal>
         <Modal
@@ -248,9 +540,14 @@ class Communication extends React.Component{
             onOk={()=>this.handleOk("phone")}
             onCancel={()=>this.handleCancel("phone")}
             >
-            <Emailform></Emailform>
+            <PhoneLog from={name} record={this.state.data} editmode={this.state.editmode} handleChange={handleChange}></PhoneLog>
         </Modal>
     </div>
     }
 }
-export default Communication
+
+const mapStateToProps = (state) => ({
+  userId: state.user.token.user._id,
+});
+
+export default connect(mapStateToProps)(Communication);
