@@ -2,6 +2,7 @@ import React, { useState } from  'react'
 import { Form, Col, Button} from 'react-bootstrap'
 import { Card, message, notification } from 'antd';
 import { useHistory } from 'react-router-dom';
+import api from '../../../resources/api'
 
 const validNameRegex = RegExp(
     /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u
@@ -11,16 +12,16 @@ const AddAccount = () =>{
 
     const history = useHistory()
     const [state, setState] = useState({
-        AccountType: "",
-        AccountName: "",
-        AccountHolder: "",
-        AccountNumber: "",
-        Institution: "",
-        DomicileBranch: "",
-        SwiftCode: "",
-        TransitNumber: "",
-        Currency: "",
-        OpeningBalance: ""
+        type: "",
+        accountName: "",
+        accountHolder: "",
+        accountNumber: "",
+        institution: "",
+        domicileBranch: "",
+        swiftCode: "",
+        transitNumber: "",
+        currency: "",
+        openingBalance: ""
     })
     const [error, setError] = useState({})
     const [display, setDisplay] = useState(false)
@@ -28,65 +29,66 @@ const AddAccount = () =>{
     // handel the change of form & set the error msg
     const handelChange = e =>{
         e.persist();
+        setDisplay(false)
         const {name, value} = e.target;
         let errors = error
         switch (name) {
-            case "AccountType":
-                errors.AccountType = value === "default" ? "Account Type is required!" : "";
+            case "type":
+                errors.type = value === "default" ? "Account Type is required!" : "";
                 break;
-            case "AccountName":
-                errors.AccountName =
+            case "accountName":
+                errors.accountName =
                     value.length == 0
                     ? "Account Name is required!"
                     : !validNameRegex.test(value)
                     ? "Account Name must be in characters!"
                     : "";
                 break;
-            case "AccountHolder":
-                errors.AccountHolder =
+            case "accountHolder":
+                errors.accountHolder =
                     value.length == 0
                     ? "Account Holder is required!"
                     : !validNameRegex.test(value)
                     ? "Account Holder must be in characters!"
                     : "";
                 break;
-            case "AccountNumber":
-                errors.AccountNumber =
+            case "accountNumber":
+                errors.accountNumber =
                     value.length == 0
                     ? "Account Number is required!"
                     : "";
                 break;
-            case "Institution":
-                errors.Institution =
+            case "institution":
+                errors.institution =
                     value.length == 0
                     ? "Institution is required!"
                     : !validNameRegex.test(value)
                     ? "Institution must be in characters!"
                     : "";
                 break;
-            case "DomicileBranch":
+            case "domicileBranch":
                 errors.DomicileBranch =
                     value.length == 0
                     ? "Domicile Branch is required!"
                     : "";
                 break;
-            case "SwiftCode":
-                errors.SwiftCode =
+            case "swiftCode":
+                errors.swiftCode =
                     value.length == 0
                     ? "Swift Code is required!"
                     : "";
                 break;
-            case "TransitNumber":
-                errors.TransitNumber =
+            case "transitNumber":
+                errors.transitNumber =
                     value.length == 0
                     ? "Transit Number is required!"
                     : "";
                 break;
-            case "Currency":
-                errors.Currency = value === "default" ? "Currency is required!" : "";
+            case "currency":
+                errors.currency = value === "default" ? "Currency is required!" : "";
                 break;
-            case "OpeningBalance":
-                errors.OpeningBalance =
+            case "openingBalance":
+                errors.openingBalance =
                     value.length == 0
                     ? "Opening Balance is required!"
                     : value > 0 
@@ -129,7 +131,14 @@ const AddAccount = () =>{
           });
         } else {
             // if form is valid then do something
-          
+            api
+            .post("/account/create", state)
+            .then((res) => {
+                console.log(res)
+            })
+            .catch((err) => {
+                console.log(err); 
+              });
         }
         history.goBack();
       }
@@ -142,89 +151,89 @@ const AddAccount = () =>{
             </div>
             <Card className="mb-4">
                 <Form className="form-details">
-                    <Form.Group controlId="AccountType">
+                    <Form.Group controlId="type">
                         <Form.Label>Account Type</Form.Label>
                         <Form.Control
                             as="select"
-                            name="AccountType"
+                            name="type"
                             onChange={handelChange}
                         >
                             <option value="default">Select Account Type</option>
                             <option value="Operating Account">Operating Account</option>
                             <option value="Trust Account">Trust Account</option>
                         </Form.Control>
-                        <p className="help-block text-danger">{error.AccountType}</p>
+                        <p className="help-block text-danger">{error.type}</p>
                     </Form.Group>
                     
 
-                    <Form.Group controlId="AccountName">
+                    <Form.Group controlId="accountName">
                         <Form.Label>Account Name</Form.Label>
-                        <Form.Control type="text" name="AccountName" placeholder="Account name"  onChange={handelChange} />
-                        <p className="help-block text-danger">{error.AccountName}</p>
+                        <Form.Control type="text" name="accountName" placeholder="Account name"  onChange={handelChange} />
+                        <p className="help-block text-danger">{error.accountName}</p>
                     </Form.Group>
 
-                    <Form.Group controlId="AccountHolder">
+                    <Form.Group controlId="accountHolder">
                         <Form.Label>Account Holder</Form.Label>
-                        <Form.Control type="text" name="AccountHolder" placeholder="Account Holder" onChange={handelChange} />
-                        <p className="help-block text-danger">{error.AccountHolder}</p>
+                        <Form.Control type="text" name="accountHolder" placeholder="Account Holder" onChange={handelChange} />
+                        <p className="help-block text-danger">{error.accountHolder}</p>
                     </Form.Group>
 
-                    <Form.Group controlId="AccountNumber">
+                    <Form.Group controlId="accountNumber">
                         <Form.Label>Account Number</Form.Label>
-                        <Form.Control type="number" name="AccountNumber" placeholder="Account Number" onChange={handelChange} />
-                        <p className="help-block text-danger">{error.AccountNumber}</p>
+                        <Form.Control type="number" name="accountNumber" placeholder="Account Number" onChange={handelChange} />
+                        <p className="help-block text-danger">{error.accountNumber}</p>
                     </Form.Group>
 
-                    <Form.Group controlId="Institution">
+                    <Form.Group controlId="institution">
                         <Form.Label>Institution</Form.Label>
-                        <Form.Control type="text" name="Institution" placeholder="Institution" onChange={handelChange} />
-                        <p className="help-block text-danger">{error.Institution}</p>
+                        <Form.Control type="text" name="institution" placeholder="Institution" onChange={handelChange} />
+                        <p className="help-block text-danger">{error.institution}</p>
                     </Form.Group>
 
-                    <Form.Group controlId="DomicileBranch">
+                    <Form.Group controlId="domicileBranch">
                         <Form.Label>Domicile Branch</Form.Label>
-                        <Form.Control type="text" name="DomicileBranch" placeholder="Domicile Branch" onChange={handelChange} />
-                        <p className="help-block text-danger">{error.DomicileBranch}</p>
+                        <Form.Control type="text" name="domicileBranch" placeholder="Domicile Branch" onChange={handelChange} />
+                        <p className="help-block text-danger">{error.domicileBranch}</p>
                     </Form.Group>
 
-                    <Form.Group controlId="SwiftCode">
+                    <Form.Group controlId="swiftCode">
                         <Form.Label>Swift Code</Form.Label>
-                        <Form.Control type="text" name="SwiftCode" placeholder="Swift Code" onChange={handelChange} />
-                        <p className="help-block text-danger">{error.SwiftCode}</p>
+                        <Form.Control type="text" name="swiftCode" placeholder="Swift Code" onChange={handelChange} />
+                        <p className="help-block text-danger">{error.swiftCode}</p>
                     </Form.Group>
                     <Form.Row>
                         <Col>
-                            <Form.Group controlId="TransitNumber">
+                            <Form.Group controlId="transitNumber">
                                 <Form.Label>Transit Number</Form.Label>
-                                <Form.Control type="text" name="TransitNumber" placeholder="Transit Number"  onChange={handelChange}/>
-                                <p className="help-block text-danger">{error.TransitNumber}</p>
+                                <Form.Control type="text" name="transitNumber" placeholder="Transit Number"  onChange={handelChange}/>
+                                <p className="help-block text-danger">{error.transitNumber}</p>
                             </Form.Group>
                         </Col>
                         <Col>
-                            <Form.Group controlId="Currency">
+                            <Form.Group controlId="currency">
                                 <Form.Label>Currency</Form.Label>
                                 <Form.Control
                                     as="select"
-                                    name="Currency"
+                                    name="currency"
                                     onChange={handelChange}
                                 >
                                     <option value="default">Select Currency</option>
                                     <option value="USD $">USD $</option>
                                     <option value="EUR €">EUR €</option>
                                 </Form.Control>
-                                <p className="help-block text-danger">{error.Currency}</p>
+                                <p className="help-block text-danger">{error.currency}</p>
                             </Form.Group>
                         </Col>
                     </Form.Row>
 
-                    <Form.Group controlId="OpeningBalance">
+                    <Form.Group controlId="openingBalance">
                         <Form.Label>Opening Balance</Form.Label>
-                        <Form.Control type="number" name="OpeningBalance" placeholder="Opening Balance" onChange={handelChange} />
-                        <p className="help-block text-danger">{error.OpeningBalance}</p>
+                        <Form.Control type="number" name="openingBalance" placeholder="Opening Balance" onChange={handelChange} />
+                        <p className="help-block text-danger">{error.openingBalance}</p>
                     </Form.Group>
 
-                    <Form.Group controlId="SetDefaultAccount">
-                        <Form.Check type="checkbox" name="SetDefaultAccount" label="Set the account as default account" onChange={handelChange} />
+                    <Form.Group controlId="defaultAccount">
+                        <Form.Check type="checkbox" name="defaultAccount" label="Set the account as default account" onChange={handelChange} />
                     </Form.Group>
                     <br /><br />
                     <Button onClick={handelSubmit}>Create New Bank Account</Button>
