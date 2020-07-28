@@ -1,15 +1,17 @@
 import React from 'react'
 import { Table , Button, Modal , Card, notification, Space, Popconfirm } from 'antd'
 import { useSelector , connect} from 'react-redux'
+import AddressForm from './AddressForm/Form'
 import ExpenseForm from '../../Activities/Form/expenseForm'
 import TimeForm from '../../Activities/Form/timeForm'
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Form, Col,Row } from 'react-bootstrap'
 import api from '../../../../resources/api'
-import { add } from 'lodash'
+
 
 let matters = {}
+let thisMatter = {}
 let activity = {}
 let timeError = ""
 class Activity extends React.Component{
@@ -24,7 +26,13 @@ class Activity extends React.Component{
                 date : "",
                 rate : "",
                 invoice : "Unbilled",
+
             },
+            to : {
+              type : "Work"
+            },
+            issueDate : new Date(),
+            dueDate : "",
             timeData : [],
             expenseData : [],
             completeData : [],
@@ -32,9 +40,15 @@ class Activity extends React.Component{
             editmode : false,
             record : "",
             name : "",
-            address : "",
+            address : {
+              city : "",
+              state : "",
+              zipCode : "",
+              street: ""
+            },
             Matter : "",
-            LName : ""
+            LName : "",
+            invoiceId : ""
 
         }
     }
@@ -47,17 +61,22 @@ class Activity extends React.Component{
       return locdat;
     }
     componentDidMount(){
-        console.log(this.props.location.state)
+   
       api.get('/matter/viewforuser/'+ this.props.userId).then((res)=>{
         matters = res 
       
+      })
+      api.get('/billing/bill/viewforuser/'+this.props.userId).then((res)=>{
+        console.log()
+        this.setState({invoiceId : res.data.data.length + 1})
       })
       api.get('/activity/viewformatter/'+this.props.userId+'/'+ this.props.location.state).then((res)=>{
         activity = res.data.data
         
         api.get('/matter/view/' + this.props.location.state).then((res) => {
+          thisMatter = res
           const name = res.data.data.client.firstName + " " + res.data.data.client.lastName
-          const address = res.data.data.client.address[0] ? res.data.data.client.address : ""
+          const address = res.data.data.client.address[0] ? res.data.data.client.address[0] : ""
           const matter = res.data.data.matterDescription
           this.setState({name  : name , address : address, matter : matter})
           
@@ -78,8 +97,7 @@ class Activity extends React.Component{
            
             const sHours = val.time.split(':')[0];
             const sMinutes = val.time.split(':')[1];
-            console.log(val.time)
-            console.log(sHours + " " + sMinutes)
+          
 
             const time = {
                 id : val._id,
@@ -90,9 +108,9 @@ class Activity extends React.Component{
                 billable : val.billable ? "Yes" : "No" ,
                 date : val.date.substring(0,10),
                 invoiceStatus : val.invoiceStatus?  val.invoiceStatus : "-" ,
-                subTotal : (rate * sHours + rate * ((rate/60)*sMinutes)).toFixed(2)
+                subTotal : (rate * sHours + ((rate/60)*sMinutes)).toFixed(2)
            }
-           total = total + rate * sHours + rate * ((rate/60)*sMinutes)
+           total = total + rate * sHours + ((rate/60)*sMinutes)
            timedata.push(time)
         }
            
@@ -134,7 +152,7 @@ class Activity extends React.Component{
       };
     
       handleOk = type => {
-        console.log(timeError)
+   
         notification.destroy()
         if(timeError !== ""){
           notification.error({message : "Invalid time"})
@@ -226,7 +244,7 @@ class Activity extends React.Component{
                   invoice : "Unbilled",
               },
               });
-              console.log(this.state)
+            
         }else
         if(type==="expense"){
             this.setState({
@@ -242,7 +260,7 @@ class Activity extends React.Component{
               },
   
               });
-              console.log(this.state)
+     
              
         }
        
@@ -251,7 +269,7 @@ class Activity extends React.Component{
 
     render(){
        
-          console.log(this.props)
+        
           const handleDelete = record => {
             api.get('/activity/delete/'+record.id).then((res)=>{
 
@@ -418,7 +436,7 @@ class Activity extends React.Component{
               if(timeValue == "" || timeValue.indexOf(":")<0)
               {
                 timeError = "Inavlid Time"
-                console.log(timeError)
+               
               }
               else
               {
@@ -428,7 +446,7 @@ class Activity extends React.Component{
                   if(sHours == "" || isNaN(sHours) /*|| parseInt(sHours)>23 */)
                   {
                     timeError = "Inavlid Time"
-                    console.log(timeError)
+                
                   }
                   else if(parseInt(sHours) == 0)
                       sHours = "00";
@@ -438,7 +456,7 @@ class Activity extends React.Component{
                   if(sMinutes == "" || isNaN(sMinutes) || parseInt(sMinutes)>59)
                   {
                     timeError = "Inavlid Time"
-                    console.log(timeError)
+                  
                   }
                   else if(parseInt(sMinutes) == 0)
                       sMinutes = "00";
@@ -451,19 +469,15 @@ class Activity extends React.Component{
               newData[name] = timeValue
               this.setState({data : newData})
             }
-            else
-            if(name==="nonBillable" || name==="billable"){
-                    newData.billable = ! newData.billable
-                    console.log(newData.billable)
-            }else{
+           else{
                 newData[name] = value
                 this.setState({data : newData })   
             }
 
-            console.log(this.state)
+      
         }
         const invoiceProps = {
-          invoiceData : { id: '644', status: 'due', date: '24/6/20' },
+          invoiceData : { id: this.state.invoiceId, status: 'Unpaid', date: new Date().getDate() +"/"+ new Date().getMonth()+1 + "/" +  new Date().getFullYear()  , dueDate : this.state.dueDate},
           companyData: {
             logo: 'https://uilogos.co/img/logotype/hexa.png',
             name: 'ABC Company',
@@ -475,10 +489,64 @@ class Activity extends React.Component{
             name: this.state.name,
             address: this.state.address,
           },
+          matter : this.state.matter,
           timeData: this.state.timeData,
           expenseData : this.state.expenseData,
           Total : this.state.total
         }
+        const HandleAddressChange = (e) => {
+        
+          e.persist();
+          const { id, value, name } = e.target;
+    
+          let newState = this.state;
+          newState.to[name] = value;
+          this.setState(newState);
+
+      
+        }
+        const handleDateChange = (e) => {
+          e.persist();
+          const { id, value, name } = e.target;
+    
+          let newState = this.state;
+          newState[name] = this.convertTime(value);
+          this.setState(newState);
+        }
+        const handleBill = (e) =>{
+            notification.destroy() 
+            //
+
+            const data = {
+              userId : this.props.userId,
+              status : "Unpaid",
+              invoiceId: this.state.invoiceId,
+              client : thisMatter.data.data.client._id,
+              matter : thisMatter.data.data._id,
+              issueDate : this.state.issueDate,
+              dueDate : this.state.dueDate,
+              balance : this.state.total ? this.state.total.toFixed(2) : "0",
+              from : thisMatter.data.data.client ,
+              to : this.state.to         
+            }
+            console.log(data)
+            
+            if(this.state.dueDate == ""){
+              notification.error({message : "Please select a due date"})
+            }else{
+              api.post('/billing/bill/create', data).then((res=>{
+                console.log(res)
+                notification.success({message : "success"})
+                this.props.history.push('/view/matter/invoice', invoiceProps)
+              })).catch((err)=>{
+                notification.error({message : "Failure"})
+              })
+            }
+            
+  
+        }
+        const today = new Date()
+        const issueDate = today.getDate() + "/" + today.getMonth() + "/" + today.getFullYear()
         
         return <div className='p-2 '>
             
@@ -491,11 +559,14 @@ class Activity extends React.Component{
                  <div>
                     <p><b>TO</b></p>
                     <p style={{fontWeight : '600'}}>{this.state.name}</p><br/>
-                    <p>{this.state.address}</p>
+                    <AddressForm HandleAddressChange={HandleAddressChange} type="To"></AddressForm>            
                  </div>
                  <div>
                     <p><b>Matter</b></p>
-                    <p style={{fontWeight : '600'}}>{this.state.matter}</p><br/>
+                    <Form className="quickBill">
+                     <Form.Control  type="text" placeholder="Small text" value={this.state.matter} />
+                    </Form>
+                    <p style={{fontWeight : '600'}}>{}</p><br/>
                  </div>
               </div>
             </Card>
@@ -524,7 +595,47 @@ class Activity extends React.Component{
                   <h4><b>{this.state.total ? this.state.total.toFixed(2) : "0"}</b></h4>
                 </div>
             </Card>
-            <Button onClick={()=>{this.props.history.push('/view/matter/invoice', invoiceProps)}} type="primary" className="mr-2">Generate Bill</Button>
+            <Card>
+              <div>
+                 <h4>Bill Options</h4>
+                 <Form>
+                    <Row>
+                      {/*
+                          <Col md="4">
+                          <Form.Group controlId="issueDate">
+                              <Form.Label>Issue Date</Form.Label>
+                              <Form.Control 
+                              required
+                              type="date" 
+                              name="issueDate" 
+                              defaultValue = {issueDate} 
+                              onChange={handleDateChange}/>
+                          </Form.Group>
+                      </Col>
+*/
+                      }
+                      
+                    </Row>
+                    <Row>
+                      <Col md="4">
+                          <Form.Group controlId="dueDate">
+                              <Form.Label>Due Date</Form.Label>
+                              <Form.Control 
+                              required
+                              type="date" 
+                              name="dueDate" 
+                              placeholder = "Select a date" 
+                              onChange={handleDateChange}/>
+                          </Form.Group>
+                      </Col>
+
+                    </Row>
+                 </Form>
+              </div>
+              
+            </Card>
+
+            <Button onClick={handleBill} type="primary" className="mr-2">Generate Bill</Button>
             <span>or</span>
             <Button onClick={()=>{this.props.history.goBack()}} className="ml-2">Cancel</Button>
             
