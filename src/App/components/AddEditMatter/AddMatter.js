@@ -5,6 +5,9 @@ import api from '../../../resources/api'
 import AddPerson from '../AddEditContact/AddPersonModal'
 import DynamicFeild from '../AddEditMatter/DynamicFeilds/index'
 import { connect } from 'react-redux'
+import { Collapse } from 'antd';
+
+const { Panel } = Collapse;
 
 const validNameRegex = RegExp(/^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u);
 
@@ -123,7 +126,11 @@ class AddEditMatter extends React.Component{
     e.persist()
  
     if(e.target.name==="client"){
-       this.setState(st=>({...st,[e.target.name]: contacts.data.data[e.target.selectedIndex]}))
+       if(e.target.selectedIndex !=0){
+        this.setState(st=>({...st,[e.target.name]: contacts.data.data[e.target.selectedIndex - 1]}))
+       }else{
+        this.setState(st=>({...st,[e.target.name]: ""}))
+       }
     }else{
       this.setState(st=>({...st,[e.target.name]:e.target.value}))
     }
@@ -208,10 +215,23 @@ class AddEditMatter extends React.Component{
                   <option>{editRes.practiseArea}</option>
                   <option>Attorney</option>
                   <option>Administrative</option>
+                  <option>Bankruptcy</option>
                   <option>Business</option>
+                  <option>Builder's Liens</option>
+                  <option>Civil Litigation</option>
+                  <option>Commercial</option>
+                  <option>Conveyance (Purchase)</option>
+                  <option>Conveyance (Sale)</option>
+                  <option>Corporate</option>
+                  <option>Criminal</option>
+                  <option>Employment</option>
+                  <option>Estates</option>
                   <option>Family</option>
-                  <option>Imployment</option>
+                  <option>Immigration</option>
+                  <option>Insurance</option>
+                  <option>Personal Injury</option>
                   <option>Tax</option>
+                  <option>Wills</option>
                 </Form.Control>
               </Form.Group>
               <Form.Group controlId="exampleForm.ControlSelect1">
@@ -248,51 +268,59 @@ class AddEditMatter extends React.Component{
        </Form>
       </Card>
 
-      <Card title="Related Contacts" className="mb-4">
-          <Form className="form-details">
+      <Collapse accordion className="mb-2">
+        <Panel header="Related Contacts" key="1">
+        <Form className="form-details">
           <DynamicFeild name="realtedContacts" InputList={this.state.relatedContacts}  option={optns} error={error.relationship} change={HandleDynamicChange} editRes={editRes} delete={handleDelete} editMode={editMode}></DynamicFeild> 
-
-    
             <br/>
             <div className="form-add mb-4">
               <span onClick={addFeild}>Add Related Contact</span>
             </div>
           </Form>
-      </Card>
-      <Card title="Custom Feilds"  className="mb-4">
-      <Form className="form-details">
-      <p>Customise your<Button variant="link" onClick={()=>this.props.history.push('/settings/customFeilds')}>Custom Feilds</Button></p>
+        </Panel>
+      </Collapse>
 
-      {customFields}
-      </Form>
-      </Card>
-      <Card title="Billing Preference"  className="mb-4">
-        <Form className="form-details">
-          <Form.Group controlId="exampleForm.ControlSelect1">
-            <Form.Label>Rate</Form.Label>
-            <Form.Control as="select" onChange={handleChange} defaultValue={editRes.billingType}>
-              <option>Flat</option>
-              <option>Hourly</option>
-              <option>Contagious</option>
-            </Form.Control>
-          </Form.Group>
-      </Form>
-      </Card>
+      <Collapse accordion className="mb-2">
+        <Panel header="Custom Feilds" key="1">
+          <Form className="form-details">
+            <p>Customise your<Button variant="link" onClick={()=>this.props.history.push('/settings/customFeilds')}>Custom Feilds</Button></p>
+            {customFields}
+          </Form>
+        </Panel>
+      </Collapse>
+      
+      <Collapse accordion className="mb-2">
+        <Panel header="Billing Preference" key="1">
+          <Form className="form-details">
+            <Form.Group controlId="exampleForm.ControlSelect1">
+              <Form.Label>Rate</Form.Label>
+              <Form.Control as="select" onChange={handleChange} defaultValue={editRes.billingType}>
+                <option>Flat</option>
+                <option>Hourly</option>
+                <option>Contagious</option>
+              </Form.Control>
+            </Form.Group>
+          </Form>
+        </Panel>
+      </Collapse>
 
-      <Card title="Task Automation"  className="mb-4">
-      <Form className="form-details">
-      <Form.Group controlId="exampleForm.ControlSelect1">
-                <Form.Label>Task</Form.Label>
+      <Collapse accordion className="mb-4">
+        <Panel header="Task Automation" key="1">
+          <Form className="form-details">
+            <Form.Group controlId="exampleForm.ControlSelect1">
+              <Form.Label>Task</Form.Label>
                 <Form.Control as="select" onChange={handleChange} defaultValue={editRes.task}>
                   <option>Client Intake</option>
                   <option>Task List</option>
                   <option>New Task List</option>
                 </Form.Control>
               </Form.Group>
-       
-      </Form>
-      </Card>
-      <Button onClick={this.handleSubmit} lassName="btn btn-success" >ADD</Button>
+          </Form>
+        </Panel>
+      </Collapse>
+
+      <Button onClick={this.handleSubmit} className="btn btn-success" >ADD</Button>
+      <Button onClick={()=>{this.props.history.goBack()}} >CANCEL</Button>
      <br></br>
       <Modal
         centered
