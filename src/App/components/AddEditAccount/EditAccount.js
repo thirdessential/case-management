@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from  'react'
+import { useSelector } from 'react-redux'
 import { Form, Col, Button} from 'react-bootstrap'
 import { Card, message, notification } from 'antd';
 import { useHistory } from 'react-router-dom';
@@ -11,7 +12,9 @@ const validNameRegex = RegExp(
 const EditAccount = (props) =>{
 
     const history = useHistory()
+    const userId = useSelector((state) => state.user.token.user._id);
     const [state, setState] = useState({
+        userId : userId,
         type: "",
         accountName: "",
         accountHolder: "",
@@ -147,9 +150,14 @@ const EditAccount = (props) =>{
             api.post("/account/edit/"+props.location.state, state)
                 .then((res) => {
                     console.log(res)
-                })
+                    notification.success({message : "Account Edited."})
+                    history.goBack();
+                }).catch((err) => {
+                    console.log(err); 
+                    notification.error({message : "Failed to edit account."})
+                  });
         }
-        history.goBack();
+        
       }
 
     return(
