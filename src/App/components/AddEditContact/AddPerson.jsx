@@ -64,6 +64,7 @@ class newPerson extends React.Component {
       valid: false,
       visible: false,
       fileList: [],
+      disable : false
     };
   }
 
@@ -152,6 +153,9 @@ class newPerson extends React.Component {
       return valid;
     };
     if (validateForm()) {
+      this.setState({
+        disable : true
+      })
       console.log('all good');
       const data = this.state;
       data.userId = this.props.userId;
@@ -163,6 +167,7 @@ class newPerson extends React.Component {
         //  dispatch(updateBlog({id:this.state._id,body:this.state}))
       } else {
         api.post('contact/create', data).then((result) => {
+          notification.success({message : "Contact created"})
           this.setState({ visible: true });
           const key = 'updatingDetails';
 
@@ -184,6 +189,7 @@ class newPerson extends React.Component {
             api
               .post('/contact/upload/' + result.data.data._id, formData)
               .then((res) => {
+                
                 console.log(res);
                 if (res.status === 200) {
                   setTimeout(() => {
@@ -197,6 +203,9 @@ class newPerson extends React.Component {
                   console.log({ res });
                 }
                 if (this.props.location != undefined) {
+                  this.setState({
+                    disable : false
+                  })
                   this.props.history.push('/manage/contacts');
                 }
               })
@@ -205,6 +214,9 @@ class newPerson extends React.Component {
               });
           } else {
             if (this.props.location != undefined) {
+              this.setState({
+                disable : false
+              })
               this.props.history.push('/manage/contacts');
             }
           }
@@ -389,6 +401,7 @@ class newPerson extends React.Component {
       } else {
         list[name][id][name] = value;
       }
+      console.log(list)
       this.setState(list);
       if (name === 'emailAddress')
         switch (name) {
@@ -426,6 +439,7 @@ class newPerson extends React.Component {
     const AddCompanyHandler = () => {
       // api.post('/company/create', {companyData})
       this.setState({ modal: false });
+      this.componentDidMount()
     };
     const handleDelete = (e) => {
       e.persist();
@@ -533,7 +547,7 @@ class newPerson extends React.Component {
     const imageUpload = (
       <Upload {...props}>
         <AntdButton>
-          <UploadOutlined /> Click to Upload
+          <UploadOutlined /> Upload Image
         </AntdButton>
       </Upload>
     );
@@ -612,10 +626,10 @@ class newPerson extends React.Component {
                     <p className="help-block text-danger">{error.LastName}</p>
                   </Col>
                 </Form.Row>
-                <Row>
+                <Form.Row className="mb-3">
                   <Col>{imageUpload}</Col>
-                </Row>
-                <Row>
+                </Form.Row>
+                <Form.Row>
                   <Col>
                     <Form.Group controlId="formGroupCompany">
                       <Form.Label>Company</Form.Label>
@@ -642,7 +656,7 @@ class newPerson extends React.Component {
                     </Form.Group>
                     <p className="help-block text-danger">{error.Title}</p>
                   </Col>
-                </Row>
+                </Form.Row>
                 <div className="form-add mb-4">
                   <span onClick={() => this.setState({ modal: true })}>
                     Add Company
@@ -1129,7 +1143,9 @@ class newPerson extends React.Component {
                             {error.Country}
                           </p>
                         </Col>
-                        <Button
+                        
+                      </Row>
+                      <Button
                           id={index}
                           name="address"
                           style={{ height: '45px', 'margin-top': '25px' }}
@@ -1137,7 +1153,6 @@ class newPerson extends React.Component {
                         >
                           -
                         </Button>
-                      </Row>
                     </div>
                   );
                 })}
@@ -1218,7 +1233,7 @@ class newPerson extends React.Component {
                 </Col>
               </Row>
 
-              <Button type="submit" className="btn btn-success">
+              <Button type="submit" disabled={this.state.disable} className="btn btn-success">
                 {editMode ? 'Update' : 'Create'}
               </Button>
               <Button onClick={() => this.props.history.goBack()}>
@@ -1231,6 +1246,14 @@ class newPerson extends React.Component {
               visible={this.state.modal}
               onOk={AddCompanyHandler}
               onCancel={() => this.setState({ modal: false })}
+              footer={[
+                <Button onClick={() => {
+                  this.setState({ modal: false })
+                  this.componentDidMount()
+                }}>
+                  Cancel
+                </Button>
+              ]}
             >
               <AddCompany modal={true}></AddCompany>
             </Modal>
