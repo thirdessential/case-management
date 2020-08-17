@@ -21,8 +21,7 @@ const validUrlRegex = RegExp(
 const validPrefixRegex = RegExp(/^(Miss|Mr|Mrs|Ms|Dr|Gov|Prof)\b/gm);
 
 let editMode = null;
-let options = null;
-let response = {};
+let contacts = [];
 let res = '';
 let error = {
   Name: '',
@@ -49,10 +48,24 @@ class AddCompany extends React.Component {
       emailAddress: [],
       phone: [],
       website: [],
+      employees: [],
+      optionsss : null,
+      disable : false
     };
   }
-  async componentDidMount() {}
-  componentWillUpdate() {
+  
+  componentDidMount() {
+    let optionsss = null
+    api.get('contact/viewforuser/'+this.props.userId).then((res)=>{
+      console.log(res.data.data)
+      contacts = res.data.data
+      optionsss = res.data.data.map((value, index)=>{
+          return <option id={index}>{value.firstName}</option>
+         })
+      this.setState({optionsss : optionsss})
+    }).catch((err)=>{
+      console.log(err)
+    })
     /*
     if(this.props.location.pathname == "/manage/contacts/edit/person"){
       editMode = true
@@ -95,25 +108,66 @@ class AddCompany extends React.Component {
       Object.values(errors.ZipCode).forEach(
         (val) => val.length > 0 && (valid = false)
       );
+      
       console.log(valid);
       return valid;
     };
     if (validateForm()) {
+      this.setState({
+        disable : true
+      })
       console.log('all good');
       const data = this.state;
       data.userId = this.props.userId;
       console.log(data);
-      if (editMode) {
-        //  dispatch(updateBlog({id:this.state._id,body:this.state}))
-      } else {
-        api
-          .post('company/create', data)
-          .then(() => this.openNotificationWithIcon('success'))
+      let valid2 = true
+      Object.values(this.state.employees).forEach(
+        (val) => { if(val == ""){
+          valid2 = false
+          this.setState({
+            disable : false
+          })
+          notification.warning({message : "Please select a employee"})
+        }
+        }
+      );
+      if(valid2){
+        
+        if (editMode) {
+          api
+          .post('/company/edit/' + this.props.location.state._id, data)
+          .then(() => {
+            this.openNotificationWithIcon('success')
+            
+              window.localStorage.setItem('company', "true")
+          })
           .catch((err) => this.openNotificationWithfailure('error'));
-        if (this.props.location != undefined) {
-          this.props.history.goBack();
+          setTimeout(() => {
+            if (this.props.location != undefined) {
+              this.props.history.goBack();
+            }
+           }, 600);
+        } else {
+          api
+            .post('company/create', data)
+            .then(() => {
+              this.openNotificationWithIcon('success')
+              window.localStorage.setItem('company', "true")
+              this.setState({
+                disable : false
+              })
+              if (this.props.location != undefined) {
+                this.props.history.goBack();
+                
+              }
+            })
+            .catch((err) => this.openNotificationWithfailure('error'));
+         setTimeout(() => {
+          
+         }, 600);
         }
       }
+      
     } else {
       return notification.warning({
         message: 'Please enter valid details',
@@ -205,15 +259,24 @@ class AddCompany extends React.Component {
     const handleMultipleChange = (e) => {
       e.persist();
       let list = this.state;
-      const { name, id, value, tagName } = e.target;
-      if (tagName === 'SELECT') {
-        name === 'emailAddress'
-          ? (list[name][id][`emailType`] = value)
-          : (list[name][id][`${name}Type`] = value);
-      } else {
-        list[name][id][name] = value;
+      console.log(e)
+      const { name, id, value, tagName, selectedIndex } = e.target;
+      if(name == "employees"){
+       if(selectedIndex != 0){
+        list.employees[id] = contacts[selectedIndex - 1]._id
+       }
+      }else{
+        if (tagName === 'SELECT' && name != "employees") {
+          name === 'emailAddress'
+            ? (list[name][id][`emailType`] = value)
+            : (list[name][id][`${name}Type`] = value);
+        } else {
+          list[name][id][name] = value;
+        }
       }
+     
       this.setState(list);
+      console.log(this.state)
       switch (name) {
         case 'emailAddress':
           errors.Email[id] = validEmailRegex.test(value)
@@ -249,6 +312,10 @@ class AddCompany extends React.Component {
         this.setState(list);
       } else if (type === 'website') {
         list.website.push({ websiteType: 'work' });
+        this.setState(list);
+      }
+      else if (type === 'employees') {
+        list.employees.push("");
         this.setState(list);
       }
     };
@@ -293,7 +360,7 @@ class AddCompany extends React.Component {
               </div>
               <Upload {...imageHandler} onChange={handleImageChange}>
                 <antdButton className="form-upload-button">
-                  <UploadOutlined /> Click to Upload
+                  <UploadOutlined /> Upload Image
                 </antdButton>
               </Upload>
               <br></br>
@@ -437,7 +504,7 @@ class AddCompany extends React.Component {
                         </p>
                       </Col>
                     </Form.Row>
-                    <Row>
+                    <Form.Row>
                       <Col>
                         <Form.Group controlId={index}>
                           <Form.Label>ZipCode</Form.Label>
@@ -793,7 +860,7 @@ class AddCompany extends React.Component {
                           {error.Country}
                         </p>
                       </Col>
-                    </Row>
+                    </Form.Row>
                     <Button id={index} name="address" onClick={handleDelete}>
                       -
                     </Button>
@@ -805,6 +872,45 @@ class AddCompany extends React.Component {
                 <span onClick={() => addFeild('address')}>Add an Address</span>
               </div>
               </div>
+              <div className="form-header-container mb-4">
+                <h4>Employees</h4>
+                <br></br>
+                {
+                  this.state.employees.map((val, index)=>{
+                    return <div >
+          
+                      <Row>
+                      <Col md="6">
+                        <Form.Group controlId={index}>
+                          <Form.Control
+                            as="select"
+                            name="Payment profile"
+                            name="employees"
+                            onClick = {handleMultipleChange}
+                            //defaultValue={this.props.record[idx]}
+                            //onChange={this.props.change}
+                          >
+                            <option>Select a contact</option>
+                            {this.state.optionsss}
+                          </Form.Control>
+                        </Form.Group>
+                      </Col>
+                      <Col>
+                        <Button id={index} name="employees" onClick={handleDelete}>-</Button>
+                      </Col>
+                    </Row>
+                    </div>
+  
+                  })
+                }
+                <br></br>
+                  <div className="form-add mb-4">
+                    <span onClick={()=>addFeild("employees")}>Add employees</span>
+                    </div>
+                    
+              <br></br>
+              </div>
+              
               <h4>Billing preferences</h4>
               <Row>
                 <Col md="6">
@@ -855,7 +961,7 @@ class AddCompany extends React.Component {
               </Row>
 
 
-              <Button type="submit" className="btn btn-success">
+              <Button type="submit" disabled={this.state.disable} className="btn btn-success">
                 {editMode ? 'Update' : 'Create'}
               </Button>
               <Button onClick={() => this.props.history.goBack()}>
