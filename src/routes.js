@@ -16,6 +16,8 @@ import Documents from './App/containers/Documents';
 import Support from './App/containers/Support/Support';
 import HelpCenter from './App/containers/HelpCenter';
 import HelpForm from './App/containers/HelpCenter/HelpForm';
+import SupportManagement from './App/containers/SupportManagement';
+import SubscriptionManagement from './App/containers/SubscriptionManagement'
 
 // import Profile from './App/containers/Profile';
 
@@ -52,13 +54,13 @@ const BootstrapTable = React.lazy(() => import('./Demo/Tables/BootstrapTable'));
 const Nvd3Chart = React.lazy(() => import('./Demo/Charts/Nvd3Chart/index'));
 
 const GoogleMap = React.lazy(() => import('./Demo/Maps/GoogleMap/index'));
-
 const OtherSamplePage = React.lazy(() => import('./Demo/Other/SamplePage'));
 const OtherDocs = React.lazy(() => import('./Demo/Other/Docs'));
 const tasks = React.lazy(() => import('./App/containers/Tasks/index'));
 const list = React.lazy(() => import('./App/containers/Tasks/List/viewList/listView'));
 const Profile = React.lazy(() => import('./App/containers/Profile'));
 const Login = React.lazy(() => import('./App/containers/Auth/Login'));
+
 // const Calendar = React.lazy(()=> import('./Demo/Calendar/CalendarElements'));
 
 const ContactsManage = React.lazy(() =>
@@ -106,6 +108,9 @@ const ViewMatter = React.lazy(() =>
 const Bills = React.lazy(() =>
   import('./App/containers/Matter/VIewMatter/AcitivityBills')
 );
+const CreateBills = React.lazy(() =>
+  import('./App/containers/Billings/CreateBills/CreateBill')
+);
 const Settings = React.lazy(() => import('./App/containers/Settings/index'));
 const customFeilds = React.lazy(() =>
   import('./App/containers/Settings/CustomFeilds/CustomFeilds')
@@ -122,6 +127,14 @@ const EditAccount = React.lazy(() =>
 const profile = React.lazy(() =>
   import('./App/containers/Settings/profile/index')
 );
+const viewTicket = React.lazy(() =>
+  import('./App/containers/SupportManagement/ViewTicket/view')
+);
+
+const viewSubscription = React.lazy(()=>import('./App/containers/SubscriptionManagement/ViewTicket/view'))
+
+
+const Target = React.lazy(() => import('./App/containers/Target'));
 
 export const adminRoutes = [
   {
@@ -135,6 +148,12 @@ export const adminRoutes = [
     exact: true,
     name: 'Lawyer Management',
     component: LawyerManagement,
+  },
+  {
+    path: '/support',
+    exact: true,
+    name: 'Support',
+    component: SupportManagement,
   },
   {
     path: '/lawyer/details',
@@ -191,6 +210,24 @@ export const adminRoutes = [
     exact: true,
     name: 'Add Edit Plans',
     component: AddEditPlans,
+  },
+  {
+    path: '/manage/subscription',
+    exact: true,
+    name: 'Manage Subscription',
+    component: SubscriptionManagement,
+  },
+  {
+    path: '/view/subscription',
+    exact: true,
+    name: 'view Subscription',
+    component: viewSubscription,
+  },
+  {
+    path: '/view/ticket',
+    exact: true,
+    name: 'view ticket',
+    component: viewTicket,
   },
 
   // { path: '/basic/badges', exact: true, name: 'Basic Badges', component: UIBasicBadges },
@@ -340,6 +377,12 @@ const routes = [
     component: Bills,
   },
   {
+    path: '/create/bills',
+    exact: true,
+    name: 'Bills',
+    component: CreateBills,
+  },
+  {
     path: '/view/matter/invoice',
     exact: true,
     name: 'Invoice',
@@ -427,6 +470,12 @@ const routes = [
     exact: true,
     name: 'Help',
     component: HelpForm,
+  },
+  {
+    path: '/target',
+    exact: true,
+    name: 'Target',
+    component: Target,
   },
 ];
 
