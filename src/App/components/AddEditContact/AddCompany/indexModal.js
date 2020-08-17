@@ -5,6 +5,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import DynamicFeilds from '../DynamicFeilds/index'
 import api from '../../../../resources/api'
 import {connect} from "react-redux"
+import ReactDOM from 'react-dom'
 
 const validEmailRegex = RegExp(
   /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
@@ -20,6 +21,7 @@ const validPrefixRegex = RegExp(/^(Miss|Mr|Mrs|Ms|Dr|Gov|Prof)\b/gm);
 let editMode = null
 let options = null
 let response = {}
+let contacts = [];
 let res = ""
 let error = {
   Name: "",
@@ -43,20 +45,24 @@ class editCompany extends React.Component{
   constructor(props){
     super(props)
     this.state={
-      address : [], emailAddress : [], phone : [], website:[]
+      address : [], emailAddress : [], phone : [], website:[],employees: [],
+      optionsss : null,
+      disable : false
     }
   }
-  async componentDidMount(){
-  
-  }
-  componentWillUpdate(){
-    /*
-    if(this.props.location.pathname == "/manage/contacts/edit/person"){
-      editMode = true
-      res=this.props.location.state
-
-    }*/
-  }
+ componentDidMount() {
+    let optionsss = null
+    api.get('contact/viewforuser/'+this.props.userId).then((res)=>{
+      console.log(res.data.data)
+      contacts = res.data.data
+      optionsss = res.data.data.map((value, index)=>{
+          return <option id={index}>{value.firstName}</option>
+         })
+      this.setState({optionsss : optionsss})
+    }).catch((err)=>{
+      console.log(err)
+    })
+ }
  openNotificationWithIcon=(type) =>{
     notification[type]({
       message: 'Company Saved',
@@ -69,42 +75,97 @@ class editCompany extends React.Component{
   
   handleSubmit = (event) => {
     event.preventDefault();
-    notification.destroy()
-      const validateForm = () => {
-        let valid = true;
-        Object.values(error).forEach((val) => val.length > 0 && (valid = false));
-        Object.values(errors.Email).forEach((val) => val.length > 0 && (valid = false));
-        Object.values(errors.phone).forEach((val) => val.length > 0 && (valid = false));
-        Object.values(errors.state).forEach((val) => val.length > 0 && (valid = false));
-        Object.values(errors.Street).forEach((val) => val.length > 0 && (valid = false));
-        Object.values(errors.City).forEach((val) => val.length > 0 && (valid = false));
-        Object.values(errors.ZipCode).forEach((val) => val.length > 0 && (valid = false));
-        console.log(valid)
-        return valid;
-    
-      };
-      if (validateForm()) {
-        console.log("all good")
-        const data = this.state
-        data.userId = this.props.userId
-        console.log(data)
-        if(editMode){
-          //  dispatch(updateBlog({id:this.state._id,body:this.state}))
-       }else{
-
-          api.post('company/create', data).then(()=>this.openNotificationWithIcon('success')).catch(err=>this.openNotificationWithfailure('error'))
-          if(this.props.location!=undefined){
-            this.props.history.goBack()
-          }
-       }
+    notification.destroy();
+    const validateForm = () => {
+      let valid = true;
+      Object.values(error).forEach((val) => val.length > 0 && (valid = false));
+      Object.values(errors.Email).forEach(
+        (val) => val.length > 0 && (valid = false)
+      );
+      Object.values(errors.phone).forEach(
+        (val) => val.length > 0 && (valid = false)
+      );
+      Object.values(errors.state).forEach(
+        (val) => val.length > 0 && (valid = false)
+      );
+      Object.values(errors.Street).forEach(
+        (val) => val.length > 0 && (valid = false)
+      );
+      Object.values(errors.City).forEach(
+        (val) => val.length > 0 && (valid = false)
+      );
+      Object.values(errors.ZipCode).forEach(
+        (val) => val.length > 0 && (valid = false)
+      );
       
-      } else {
-        return notification.warning({
-          message: "Please enter valid details",
-        })
+      console.log(valid);
+      return valid;
+    };
+    if (validateForm()) {
+      this.setState({
+        disable : true
+      })
+      console.log('all good');
+      const data = this.state;
+      data.userId = this.props.userId;
+      console.log(data);
+      let valid2 = true
+      Object.values(this.state.employees).forEach(
+        (val) => { if(val == ""){
+          valid2 = false
+          this.setState({
+            disable : false
+          })
+          notification.warning({message : "Please select a employee"})
+        }
+        }
+      );
+      if(valid2){
+        
+        if (editMode) {
+          api
+          .post('/company/edit/' + this.props.location.state._id, data)
+          .then(() => {
+            this.openNotificationWithIcon('success')
+            
+              window.localStorage.setItem('company', "true")
+          })
+          .catch((err) => this.openNotificationWithfailure('error'));
+          setTimeout(() => {
+            if (this.props.location != undefined) {
+              this.props.history.goBack();
+            }
+           }, 600);
+        } else {
+          api
+            .post('company/create', data)
+            .then(() => {
+             // this.componentDidMount()
+              this.openNotificationWithIcon('success')
+              ReactDOM.findDOMNode(this.messageForm).reset()
+              this.setState({
+                disable : false
+              })
+        //      window.localStorage.setItem('company', "true")
+            })
+            .catch((err) => this.openNotificationWithfailure('error'));
+         setTimeout(() => {
+          if (this.props.location != undefined) {
+            this.props.history.goBack();
+            this.setState({
+              disable : false
+            })
+          }
+         }, 600);
+        }
       }
-    
-}
+      
+    } else {
+      return notification.warning({
+        message: 'Please enter valid details',
+      });
+    }
+  };
   
   render(){
     
@@ -193,12 +254,26 @@ class editCompany extends React.Component{
       }
     }
     const handleMultipleChange = (e) => {
-      e.persist()
-      let list = this.state
-      const { id , value, name } = e.target  
-      list[name][id] = value
-      this.setState(list)
-      console.log(this.state)
+      e.persist();
+      let list = this.state;
+      console.log(e)
+      const { name, id, value, tagName, selectedIndex } = e.target;
+      if(name == "employees"){
+       if(selectedIndex != 0){
+        list.employees[id] = contacts[selectedIndex - 1]._id
+       }
+      }else{
+        if (tagName === 'SELECT' && name != "employees") {
+          name === 'emailAddress'
+            ? (list[name][id][`emailType`] = value)
+            : (list[name][id][`${name}Type`] = value);
+        } else {
+          list[name][id][name] = value;
+        }
+      }
+     
+      this.setState(list);
+
       switch (name) {
         
         case "emailAddress":
@@ -240,6 +315,10 @@ class editCompany extends React.Component{
           list.website.push("")
           this.setState(list)
         }
+        else if (type === 'employees') {
+          list.employees.push("");
+          this.setState(list);
+        }
      
     }
   const imageHandler = {
@@ -280,13 +359,18 @@ class editCompany extends React.Component{
         <>
         <div>
           <div>
-            <Form className="form-details" onSubmit={this.handleSubmit}>
+            <Form 
+            className="form-details" 
+            id='myForm'
+            className="form"
+            ref={ form => this.messageForm = form }
+            onSubmit={this.handleSubmit}>
             <div className="form-header-container mb-4">
               <h3 className="form-header-text">Add company</h3>
             </div>
               <Upload {...imageHandler} onChange={handleImageChange}>
                 <antdButton className="form-upload-button">
-                  <UploadOutlined /> Click to Upload
+                  <UploadOutlined />Upload Image
                 </antdButton>
               </Upload><br></br>
             
@@ -380,7 +464,7 @@ class editCompany extends React.Component{
               </Col>
             
             </Form.Row>
-            <Row>
+            <Form.Row>
                 <Col>
                   <Form.Group controlId={index}>
                     <Form.Label>ZipCode</Form.Label>
@@ -711,7 +795,7 @@ class editCompany extends React.Component{
               <p className="help-block text-danger">{error.Country}</p>
 
                 </Col>
-              </Row>
+              </Form.Row>
               <Button id={index} name="address" onClick={handleDelete}>-</Button>
 
                   
@@ -719,10 +803,50 @@ class editCompany extends React.Component{
               })
             }
             
+            
             <div className="form-add mb-4">
               <span onClick={()=>addFeild("address")}>Add an Address</span>
             </div>
             </div>
+            <div className="form-header-container mb-4">
+                <h4>Employees</h4>
+                <br></br>
+                {
+                  this.state.employees.map((val, index)=>{
+                    return <div >
+          
+                      <Row>
+                      <Col md="6">
+                        <Form.Group controlId={index}>
+                          <Form.Control
+                            as="select"
+                            name="Payment profile"
+                            name="employees"
+                            onClick = {handleMultipleChange}
+                            //defaultValue={this.props.record[idx]}
+                            //onChange={this.props.change}
+                          >
+                            <option>Select a contact</option>
+                            {this.state.optionsss}
+                          </Form.Control>
+                        </Form.Group>
+                      </Col>
+                      <Col>
+                        <Button id={index} name="employees" onClick={handleDelete}>-</Button>
+                      </Col>
+                    </Row>
+                    </div>
+  
+                  })
+                }
+                <br></br>
+                 <div className="form-add mb-4">
+                    <span onClick={()=>addFeild("employees")}>Add a employees</span>
+                    </div>
+                    
+              <br></br>
+              </div>
+             
             <h4>Billing preferences</h4>
               <Row>
                 <Col>
@@ -772,8 +896,10 @@ class editCompany extends React.Component{
                 </Col>
               </Row>
 
-  
-            <Button type="submit"  className="btn btn-success">{editMode?'Update':'Create'}</Button>
+          <div className="float-right" style={{marginTop : "7.5%"}}>
+          <Button type="submit" disabled = {this.state.disable}  className="btn btn-success">{editMode?'Update':'Create and save another'}</Button>
+
+          </div>
 
           </Form>
           </div>
