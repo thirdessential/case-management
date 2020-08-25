@@ -34,6 +34,7 @@ class AddEditMatter extends React.Component{
       customFields : [{
       }],
       modal : false,
+      disable  : false
     }
 
   }
@@ -92,6 +93,9 @@ class AddEditMatter extends React.Component{
         message: "Please add a Contact",
       });
     }else{
+      this.setState({
+        disable : true
+      })
       console.log("all good")
        const data = this.state
         data.customFields = customData
@@ -100,13 +104,22 @@ class AddEditMatter extends React.Component{
        if(this.state.editMode){
           //  dispatch(updateBlog({id:state._id,body:state}))
        }else{
-         api.post('matter/create', data).then(res=>console.log(res)).then(()=>this.openNotificationWithIcon('success')).catch(()=>this.openNotificationWithfailure('error'))
+         api.post('matter/create', data).then((res)=>{
+          console.log(res)
+          this.openNotificationWithIcon('success')
+          this.setState({
+            disable : false
+          })
+          if(this.props.location != undefined){
+            this.props.history.goBack()
+           }
+         }).catch(()=>{
+          this.openNotificationWithfailure('error')
+         })
          
        }
 
-       if(this.props.location!=undefined){
-        this.props.history.goBack()
-       }
+       
     }
   }
   
@@ -319,14 +332,28 @@ class AddEditMatter extends React.Component{
         </Panel>
       </Collapse>
 
-      <Button onClick={this.handleSubmit} className="btn btn-success" >ADD</Button>
+      <Button onClick={this.handleSubmit} disabled = {this.state.disable} className="btn btn-success" >ADD</Button>
       <Button onClick={()=>{this.props.history.goBack()}} >CANCEL</Button>
      <br></br>
       <Modal
         centered
         visible={this.state.modal}
-        onOk={() => this.setState({modal :false})}
-        onCancel={() => this.setState({modal :false})}
+        onOk={() => {
+          this.setState({modal :false})
+          this.componentDidMount()
+        }}
+        onCancel={() => {
+          this.setState({modal :false})
+          this.componentDidMount()
+        }}
+        footer={[
+          <Button onClick={() => {
+            this.setState({ modal: false })
+            this.componentDidMount()
+          }}>
+            Cancel
+          </Button>
+        ]}
       >
       <AddPerson></AddPerson>
 
