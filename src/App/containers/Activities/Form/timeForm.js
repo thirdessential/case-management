@@ -8,8 +8,31 @@ class ExpenseForm extends React.Component{
     constructor(props){
         super(props)
         this.state = {
-         
+          data : {
+            time : ''
+          }
         }
+    }
+    setTimer = () => {
+       
+        const time = window.localStorage.getItem('timer');
+        let hours = Math.floor(time / 3600);
+        let minutes = Math.floor(time / 60);
+        let seconds = time % 60
+       
+        if (minutes >= 59) {
+          minutes = minutes % 60;
+        }
+        if (seconds < 10) {
+          seconds = "0"+seconds
+        }
+        console.log("Secounds  " + seconds)
+    
+        //   const Seconds = time % 60;
+        const data = this.state.data;
+        data.time = hours + ':' + minutes + ':' + seconds
+        this.setState({ data: data });
+        console.log(this.state.data)
     }
     componentDidMount(){
         api.get('/matter/viewforuser/'+ this.props.userId).then((res)=>{
@@ -21,173 +44,53 @@ class ExpenseForm extends React.Component{
              this.setState({option : option})
          })
          
-    }
-
-    render(){
-        console.log(this.props.record.billable)
-        let date = ""
-        if(this.props.editmode){
-            date = this.props.record.date.substring(0,10)
-            console.log(date)
+        this.setTimer()
        }
 
-       const duration = this.props.touched ? <Form.Group controlId="duration">
-                                                <Form.Label>Duration</Form.Label>
-                                                <Form.Control 
-                                                type="text" 
-                                                name="time" 
-                                                placeholder="hh:mm" 
-                                                value = {this.props.time}
-                                                onChange={this.props.handleChange}/>
-                                              </Form.Group>
-                                              :
-                                              <Form.Group controlId="duration">
-                                                <Form.Label>Duration</Form.Label>
-                                                <Form.Control 
-                                                type="text" 
-                                                name="time" 
-                                                placeholder="hh:mm" 
-                                                onChange={this.props.handleChange}/>
-                                            </Form.Group>
- 
-       return  this.props.editmode ? <Form >
-       <Row>
-           <Col>
-           <Form.Group controlId="duration">
-               <Form.Label>Duration</Form.Label>
-               <Form.Control 
-               type="text" 
-               name="time" 
-               defaultValue = {this.props.record.time}
-               onChange={this.props.handleChange}/>
-           </Form.Group>
-           </Col>
-           <Col>
-               <Timer setTime = {this.props.setTime} ></Timer>
-           </Col>
-       </Row>
-       
-       <Row>
-           <Col>
-           <Form.Group controlId="matter">
-               <Form.Label>Matter</Form.Label>
-               <Form.Control 
-                   as="select"
-                   name="matter" 
-                   defaultValue = {this.props.record.matter}
-                   onChange={this.props.handleChange}>
-               <option>Select a matter</option>
-               {this.state.option}
-               </Form.Control>
-            </Form.Group>
-           </Col>
-           <Col>
-           <Form.Group controlId="rate">
-               <Form.Label>Rate</Form.Label>
-               <Form.Control 
-               required
-               type="text" 
-               name="rate" 
-               defaultValue = {this.props.record.rate}
-               onChange={this.props.handleChange} />
-           </Form.Group>
-           </Col>
+    render(){
+        
+        let date = ""
+        /*
+        const time = window.localStorage.getItem('timer');
+        let hours = Math.floor(time / 3600);
+        let minutes = Math.floor(time / 60);
+        if (minutes >= 59) {
+        minutes = minutes % 60;
+        }
 
-       </Row>
-      
-           
-       <Row>
-           <Col>
-           <Form.Group controlId="Description">
-               <Form.Label>Description</Form.Label>
-               <Form.Control 
-               name="description" 
-               as="textarea" 
-               rows="3"
-               defaultValue = {this.props.record.description}
-               onChange={this.props.handleChange} />
-           </Form.Group>
-           </Col>
+        //   const Seconds = time % 60;
+        
+        const timeee = hours + ':' + minutes;
+        if(timeee != window.localStorage.getItem('timer') ){
+            const data = this.state.data
+            data.time = time
+            this.setState({
+                data : data
+            })
+        }
+        */
 
-       </Row>
-      
-       <Row>
-           <Col>
-           <Form.Group controlId="rate">
-               <Form.Label>Rate</Form.Label>
-               <Form.Control 
-               required
-               type="text" 
-               name="rate" 
-               defaultValue = {this.props.record.rate}
-               onChange={this.props.handleChange} />
-           </Form.Group>
-           </Col>
-           <Col>
-           <Form.Group controlId="date">
-               <Form.Label>Date</Form.Label>
-               <Form.Control 
-               required
-               type="date" 
-               name="date" 
-               defaultValue = {date}
-               onChange={this.props.handleChange}/>
-           </Form.Group>
-           </Col>
-           {/*
-                <Col>
-                <Form.Group controlId="invoiceStatus">
-                    <Form.Label>Invoice Status</Form.Label>
-                    <Form.Control 
-                        as="select"
-                        name="invoiceStatus"
-                        defaultValue = {this.props.record.invoiceStatus}
-                        onChange={this.props.handleChange} >
-                    <option>Unbilled</option>
-                    <option>Billed</option>
-                    </Form.Control>
-                 </Form.Group>
-                </Col>
-           */}
-          
-       </Row>
-           
-           <Row>
-               <Col>
-               <Form.Check 
-              type="checkbox"
-              id="billable"
-              name="billable"
-              label="Billable"
-              defaultChecked = {this.props.record.billable==="Yes"? true : false}
-              onChange={this.props.handleChange}
-          /><br></br>
-               </Col>
-           </Row>
-   
-           {
-               /*
-               <Form.Check 
-              type="checkbox"
-              id="nonBillable"
-              name="nonBillable"
-              label="Non-billable"
-              defaultChecked = {!this.props.record.billable}
-              onChange={this.props.handleChange}
-          />
-               */
-           }
-   </Form>
+                                        
+        
 
-
-   :
-   <Form >
+       return <Form 
+       id='myForm'
+       className="form"
+       ref={ form => this.props.handleReset(form) } >
         <Row>
             <Col>
-                 {duration}
+                <Form.Group controlId="duration">
+                     <Form.Label>Duration</Form.Label>
+                      <Form.Control 
+                        type="text" 
+                        name="time" 
+                        placeholder="hh:mm:ss" 
+                        defaultValue = {this.state.data.time}
+                        onChange={this.props.handleChange}/>
+                </Form.Group>
             </Col>
             <Col>
-                <Timer setTime = {this.props.setTime} ></Timer>
+                <Timer setTimer = {this.setTimer} ></Timer>
             </Col>
         </Row>
         
