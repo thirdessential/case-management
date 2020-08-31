@@ -7,6 +7,7 @@ import {
   notification,
   Popconfirm,
   Card,
+  Spin
 } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
@@ -31,6 +32,7 @@ class matterManage extends React.Component {
       showSearchClient: false,
       showSearchPractise: false,
       value: '',
+      loading : true,
       finalData: [],
     };
     this.filterByMatterInput = this.filterByMatterInput.bind(this);
@@ -72,12 +74,14 @@ class matterManage extends React.Component {
         closed: closed,
         pending: pending,
         all: data,
+        loading : false
       });
     }
   }
   filterByMatterInput = () => (
     <div>
       <SearchOutlined
+      style={{"vertical-align": "revert"}}
         onClick={() => {
           this.state.showSearchMatter === false
             ? this.setState({
@@ -89,11 +93,12 @@ class matterManage extends React.Component {
             : this.setState({ ...this.state, showSearchMatter: false });
         }}
       />
-      <span> Matter Description </span>
+      <span style={{paddingLeft : "8px"}}> Matter Description </span>
 
       <div>
         {this.state.showSearchMatter && (
           <input
+          className="mt-2"
             placeholder="Search Matter "
             value={this.state.value}
             onChange={(e) => {
@@ -122,6 +127,7 @@ class matterManage extends React.Component {
   filterByClientInput = () => (
     <div>
       <SearchOutlined
+      style={{"vertical-align": "revert"}}
         onClick={() => {
           this.state.showSearchClient === false
             ? this.setState({
@@ -133,11 +139,12 @@ class matterManage extends React.Component {
             : this.setState({ ...this.state, showSearchClient: false });
         }}
       />
-      <span> Client </span>
+      <span style={{paddingLeft : "8px"}}> Client </span>
 
       <div>
         {this.state.showSearchClient && (
           <input
+          className="mt-2"
             placeholder="Search Client "
             value={this.state.value}
             onChange={(e) => {
@@ -167,6 +174,7 @@ class matterManage extends React.Component {
   filterByPractiseInput = () => (
     <div>
       <SearchOutlined
+      style={{"vertical-align": "revert"}}
         onClick={() => {
           this.state.showSearchPractise === false
             ? this.setState({
@@ -179,11 +187,11 @@ class matterManage extends React.Component {
             : this.setState({ ...this.state, showSearchPractise: false });
         }}
       />
-      <span> Practise Area </span>
+      <span style={{paddingLeft : "8px"}}> Practise Area </span>
 
-      <div>
+      <div >
         {this.state.showSearchPractise && (
-          <input
+          <input className="mt-2"
             placeholder="Search Practise Area "
             value={this.state.value}
             onChange={(e) => {
@@ -241,10 +249,13 @@ class matterManage extends React.Component {
     const handleDelete = (record) => {
       api
         .get('/matter/delete/' + record.id)
-        .then(() => notification.success({ message: 'Matter deleted.' }))
+        .then(() => {
+          this.componentDidMount()
+          notification.success({ message: 'Matter deleted.' })
+        })
         .catch(() => notification.error({ message: 'Failed to delete' }));
       setTimeout(() => {
-        window.location.reload();
+        //window.location.reload();
       }, 1000);
     };
 
@@ -400,7 +411,8 @@ class matterManage extends React.Component {
       </div>
     );
     return (
-      <Card title="Matter" extra={Add}>
+      <Spin size = "large" spinning = {this.state.loading}>
+        <Card title="Matter" extra={Add}>
         <div>
           <span className="ml-auto"></span>
           <Button
@@ -451,7 +463,9 @@ class matterManage extends React.Component {
           }}
         ></Table>
       </Card>
-    );
+    
+      </Spin>
+      );
   }
 }
 
