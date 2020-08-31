@@ -9,10 +9,12 @@ import {
   notification,
   Input,
   Checkbox,
+  Spin
 } from 'antd';
 
 export default function Calendar(props) {
   const [calendar, setCalendar] = useState([]);
+  const [Loading, setLoading] = useState(true)
   const [visible, setVisible] = useState(false);
   const [calEvent, setcalEvent] = useState({
     id: '',
@@ -33,6 +35,7 @@ export default function Calendar(props) {
   const [modalFor, setModalFor] = useState('Add');
 
   const columns = [
+    /*
     {
       title: 'Start Date',
       dataIndex: 'startDate',
@@ -40,6 +43,7 @@ export default function Calendar(props) {
       sortDirections: ['descend', 'ascend'],
       sorter: (a, b) => a.startDate > b.startDate,
     },
+    */
     {
       title: 'Start Time',
       dataIndex: 'startTime',
@@ -47,6 +51,7 @@ export default function Calendar(props) {
       sortDirections: ['descend', 'ascend'],
       sorter: (a, b) => a.startTime > b.startTime,
     },
+    /*
     {
       title: 'End Date',
       dataIndex: 'endDate',
@@ -54,6 +59,7 @@ export default function Calendar(props) {
       sortDirections: ['descend', 'ascend'],
       sorter: (a, b) => a.endDate > b.endDate,
     },
+    */
     {
       title: 'End Time',
       dataIndex: 'endTime',
@@ -303,6 +309,7 @@ export default function Calendar(props) {
       })
       .catch((err) => console.log(err));
     setCalendar(cal);
+    setLoading(false)
   };
 
   useEffect(() => {
@@ -310,7 +317,8 @@ export default function Calendar(props) {
   }, []);
 
   return (
-    <div>
+    <Spin spinning={Loading} size = "large">
+      <div>
       <Card
         title="Calendar"
         extra={
@@ -346,5 +354,7 @@ export default function Calendar(props) {
         <Table dataSource={calendar} columns={columns} />
       </Card>
     </div>
-  );
+  
+    </Spin>
+    );
 }
