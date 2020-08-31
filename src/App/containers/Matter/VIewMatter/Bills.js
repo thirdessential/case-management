@@ -1,10 +1,11 @@
 import Invoice from '../../../components/Invoice/Invoice';
-import React from 'react';
-import { Card, Button, Tabs, Table } from 'antd';
+import React, {useState} from 'react';
+import { Card, Button, Tabs, Table, Spin } from 'antd';
 import jsPDF from 'jspdf';
 const { TabPane } = Tabs;
 
 export default function Bills(props) {
+  const [Loading, setLoading] = useState(false)
   const columnsForBills = [
     {
       title: 'Last Seen',
@@ -88,7 +89,8 @@ export default function Bills(props) {
     doc.save('bills.pdf');
   };
   return (
-    <Card
+    <Spin spinning={Loading} size = "large">
+      <Card
       title="Bills"
       extra={
         <span style={{ float: 'right' }}>
@@ -106,7 +108,6 @@ export default function Bills(props) {
             )}
             columns={columnsForBills}
           />
-          ;
         </TabPane>
         <TabPane tab="Paid" key="2">
           <Table
@@ -115,7 +116,6 @@ export default function Bills(props) {
             )}
             columns={columnsForBills}
           />
-          ;
         </TabPane>
         <TabPane tab="Unpaid" key="3">
           <Table
@@ -124,12 +124,12 @@ export default function Bills(props) {
             )}
             columns={columnsForBills}
           />
-          ;
         </TabPane>
         <TabPane tab="All" key="4">
           <Table dataSource={props.dataSource} columns={columnsForBills} />;
         </TabPane>
       </Tabs>
     </Card>
-  );
+  
+    </Spin>);
 }
