@@ -8,11 +8,14 @@ import {
   Input,
   Form,
   Select,
+  Popconfirm,
+  Spin
 } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 
 import api from '../../../resources/api';
+import { findLast } from 'lodash';
 const { Option } = Select;
 
 //matters={props.location.state.matters}
@@ -21,7 +24,9 @@ const { Option } = Select;
 
 const Documents = () => {
   const [docs, setDocs] = useState([]);
+  const [Disable, setDisable] = useState(false)
   const [viewUpload, setViewUpload] = useState(false);
+  const [Loading, setLoading] = useState(true)
   const [uploadData, setUploadData] = useState({
     document: '',
     _id: '',
@@ -90,14 +95,20 @@ const Documents = () => {
       key: '7',
       render: (_, record) => {
         return (
-          <Button
-            className=" btn-outline-danger "
-            onClick={() => {
-              deleteHandler(record._id);
-            }}
-          >
-            Delete
-          </Button>
+          <Popconfirm
+                    title="Are you sure delete this Document?"
+                    onConfirm={()=>deleteHandler(record._id)}
+                    onCancel={()=>{}}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button
+                      className=" btn-outline-danger "
+                    >
+                      Delete
+                    </Button>
+                  </Popconfirm>
+          
         );
       },
     },
@@ -110,7 +121,7 @@ const Documents = () => {
           <Button
             className="btn-outline-primary "
             onClick={() => {
-              downloadHandler(record.id);
+              downloadHandler(record);
             }}
             icon={<DownloadOutlined />}
           >
@@ -129,18 +140,31 @@ const Documents = () => {
     },
   };
   const handleInput = (item) => (e) => {
+    console.log(item)
+    console.log(e)
     if (item === 'document') {
       setUploadData({ ...uploadData, document: e.target.files[0] });
     } else {
       if (item === 'matter') {
-        uploadData[`${item}`] = e;
-        setUploadData({ ...uploadData });
-        getMatterById(e);
+        if(modalFor === "Upload"){
+          console.log("from the uploads")
+          uploadData[`${item}`] = e;
+          setUploadData({ ...uploadData });
+          getMatterById(e);
+        }else{
+          console.log("from the edits")
+          api.get(`/matter/view/${e}`).then((res) => {
+            uploadData[`${item}`] = res.data.data ;
+            setUploadData({ ...uploadData });
+            getMatterById(e);
+            });
+        }
       } else {
         uploadData[`${item}`] = e.target.value;
         setUploadData({ ...uploadData });
       }
     }
+    console.log(uploadData)
   };
   const getISTDate = (dateInUTC) => {
     var localDate = new Date(dateInUTC);
@@ -155,6 +179,7 @@ const Documents = () => {
   const getDocuments = async () => {
     let tempDocs = [];
     await api.get(`/document/viewforuser/${userId}`).then((res) => {
+      console.log(res.data.data)
       res.data.data.map((item, index) => {
         tempDocs = [
           ...tempDocs,
@@ -169,6 +194,7 @@ const Documents = () => {
       });
     });
     setDocs(tempDocs);
+    setLoading(false)
     tempDocs = [];
     await api.get(`/matter/viewforuser/${userId}`).then((res) => {
       res.data.data.map((item) => {
@@ -209,7 +235,35 @@ const Documents = () => {
   };
 
   const handleSubmit = async () => {
-    var docFormData = new FormData();
+    
+    if(uploadData.category === ''){
+      notification.warning({
+        message : "Please provide a category."
+      })
+    }else
+    if(uploadData.contact === ''){
+      notification.warning({
+        message : "Please provide a contact."
+      })
+    }else
+    if(uploadData.document === '' ){
+      notification.warning({
+        message : "Please provide a document."
+      })
+    }else
+    if(uploadData.matter === '' ){
+      notification.warning({
+        message : "Please provide a matter."
+      })
+    }else
+    if(uploadData.name === ''){
+      notification.warning({
+        message : "Please provide a name."
+      })
+    }
+    else{
+      setDisable(true)
+      var docFormData = new FormData();
     docFormData.set('document', uploadData.document);
     docFormData.set('name', uploadData.name);
     docFormData.set('matter', uploadData.matter);
@@ -229,11 +283,14 @@ const Documents = () => {
       });
     setTimeout(() => {
       setViewUpload(false);
+      setDisable(false)
     }, 600);
+    }
+    
   };
 
-  const downloadHandler = async (docId) => {
-    window.open(docs.filter((item) => item.id === docId)[0].document);
+  const downloadHandler = async (record) => {
+    window.open(record.document);
   };
 
   const deleteHandler = async (docId) => {
@@ -248,18 +305,50 @@ const Documents = () => {
       });
   };
   const editHandler = async (docId) => {
-    setModalFor('Edit');
-    setViewUpload(true);
-    await api.get(`/document/view/${docId}`).then((response) => {
-      setUploadData(response.data.data);
-    });
+    if(uploadData.category === ''){
+      notification.warning({
+        message : "Please provide a category."
+      })
+    }else
+    if(uploadData.contact === ''){
+      notification.warning({
+        message : "Please provide a contact."
+      })
+    }else
+    if(uploadData.document === '' ){
+      notification.warning({
+        message : "Please provide a document."
+      })
+    }else
+    if(uploadData.matter === '' ){
+      notification.warning({
+        message : "Please provide a matter."
+      })
+    }else
+    if(uploadData.name === ''){
+      notification.warning({
+        message : "Please provide a name."
+      })
+    }
+    else{
+      setModalFor('Edit');
+      setViewUpload(true);
+      await api.get(`/document/view/${docId}`).then((response) => {
+        
+        setUploadData(response.data.data);
+      });
+    }
+
+   
   };
 
   const handleEdit = async () => {
+    setDisable(true)
     await api
       .post(`/document/edit/${uploadData._id}`, uploadData)
       .then(function (response) {
-        notification.success({ message: 'Document Uploaded.' });
+        notification.success({ message: 'Document edited.' });
+        setDisable(false)
         getDocuments();
       })
       .catch(function (response) {
@@ -287,6 +376,7 @@ const Documents = () => {
           key="submit"
           type="primary"
           htmlType="submit"
+          disabled={Disable}
           onClick={modalFor === 'Upload' ? handleSubmit : handleEdit}
         >
           Submit
@@ -382,7 +472,7 @@ const Documents = () => {
             <Input
               type="file"
               onChange={handleInput('document')}
-              value={uploadData.document}
+             // value={uploadData.document}
             />
           </Form.Item>
         )}
@@ -390,7 +480,8 @@ const Documents = () => {
     </Modal>
   );
   return (
-    <Card
+    <Spin size = "large" spinning={Loading}>
+      <Card
       title="Document"
       extra={
         <span style={{ float: 'right' }} className="">
@@ -416,7 +507,9 @@ const Documents = () => {
       {uploadForm()}
       <Table dataSource={docs} columns={columnsForDocuments} />
     </Card>
-  );
+ 
+    </Spin>
+     );
 };
 
 export default Documents;
