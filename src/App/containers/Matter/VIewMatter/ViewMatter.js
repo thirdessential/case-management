@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../../../resources/api';
-import { Card, Tabs, Button, Modal, Table, Upload, notification } from 'antd';
+import { Card, Tabs, Button, Modal, Table, Upload, notification, Spin} from 'antd';
 import { number } from 'prop-types';
 import { Form, Row, Col } from 'react-bootstrap';
 import Communication from './communnication';
@@ -10,12 +10,15 @@ import 'jspdf-autotable';
 import Bills from './Bills';
 import Documents from './Documents';
 import Calendar from './Calendar';
+import Notes from './Notes';
 
 const { TabPane } = Tabs;
 
 function CompanyView(props) {
   let response = {};
   const [desc, setdesc] = useState('');
+  const [Loading, setLoading] = useState(true)
+  const [total, settotal] = useState("0")
   const [Client, setClient] = useState('');
   const [Amount, setAmount] = useState('0');
   const [state, setState] = useState({ visible: false });
@@ -86,11 +89,33 @@ function CompanyView(props) {
       )
       .then((res) => {
         let activity = [];
+        let total = 0
         res.data.data.map((val, index) => {
+
+          let rate = val.rate
+          if(rate.includes("$")){
+            rate = parseFloat(rate.substring(0, rate.length - 1))
+          }
+
+          if(val.type === "time" && val.time != undefined ){
+            console.log(rate)
+
+            const sHours = parseInt(val.time.split(':')[0]);
+            const sMinutes = parseInt(val.time.split(':')[1]);
+            const sSecs =  parseFloat(val.time.split(':')[2])
+            console.log(sHours + "  " + sMinutes)
+            total = total + rate * sHours + ((rate/60)*sMinutes) +  ((rate/3600)*sSecs)
+          }
+          if(val.type ==="expense"){ 
+              total = total + rate * parseInt(val.qty)
+        }
+         
           activity.push(val);
+          
         });
         console.log('activiviviviv', activity);
         setAct(activity);
+        settotal(total)
       });
   }, []);
 
@@ -196,6 +221,7 @@ function CompanyView(props) {
     setfirstName(fNAme);
     setEmail(mail);
     setNumber(Num);
+    setLoading(false)
   };
   function callback(key) {
     console.log(key);
@@ -252,7 +278,8 @@ function CompanyView(props) {
     props.history.push('/view/matter/bills', props.location.state.id);
   };
   return (
-    <div>
+    <Spin size="large" spinning = {Loading}>
+      <div>
       <Card style={{ height: '110px' }}>
         <div className="d-flex mb-3 example-parent">
           <div className="mr-auto p-2 col-example">
@@ -291,7 +318,7 @@ function CompanyView(props) {
           </div>
         </div>
       </Card>
-      <Tabs defaultActiveKey="1" onChange={callback}>
+      <Tabs defaultActiveKey="1" onChange={callback} >
         <TabPane tab="Dashboard" key="1" style={{ padding: '0px' }}>
           <Card
             title="Financial"
@@ -309,7 +336,7 @@ function CompanyView(props) {
                   <p>
                     <b>Outstanding Amount</b>
                   </p>
-                  <span>$500</span>
+                     <span>{parseFloat(total).toFixed('2')}</span>
                 </div>
                 <div style={{ flex: 1 }}>
                   <p>
@@ -408,7 +435,7 @@ function CompanyView(props) {
             </Form>
           </Modal>
         </TabPane>
-        <TabPane tab="Acitivites" key="2">
+        <TabPane tab="Activities" key="2">
           <Activity id={props.location.state.id}></Activity>
         </TabPane>
         <TabPane tab="Calendar" key="3">
@@ -418,21 +445,22 @@ function CompanyView(props) {
           />
         </TabPane>
         <TabPane tab="Communication" key="4">
-          <Communication></Communication>
+          <Communication id={props.location.state.id}></Communication>
         </TabPane>
-        <TabPane tab="Phone Log" key="5">
+        {
+          /*
+          <TabPane tab="Phone Log" key="5">
           <Card
             title="Phone Log"
             extra={<a href="#"></a>}
             className="form-width mb-4"
           ></Card>
-        </TabPane>
+             </TabPane>
+          */
+        }
+     
         <TabPane tab="Notes" key="6">
-          <Card
-            title="Notes"
-            extra={<a href="#"></a>}
-            className="form-width mb-4"
-          ></Card>
+          <Notes id={props.location.state.id}></Notes>
         </TabPane>
         <TabPane tab="Document" key="7">
           {console.log('matter in viw', props.location.state.matters)}
@@ -450,6 +478,8 @@ function CompanyView(props) {
         </TabPane>
       </Tabs>
     </div>
-  );
+  
+    </Spin>
+    );
 }
 export default CompanyView;
