@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Input, Space, notification, Card , Popconfirm} from 'antd';
+import React, { useEffect, useState, useRef } from 'react';
+import { Table, Button, Input, Space, notification, Card , Popconfirm , Spin} from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
 import Highlighter from 'react-highlight-words';
@@ -10,13 +10,24 @@ import ExportExcel from './ExportExcel';
 
 import api from '../../../resources/api';
 
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  console.log(ref.current)
+  return ref.current;
+
+}
 const ContactsManage = (props) => {
+  console.log(props)
   const userId = useSelector((state) => state.user.token.user._id);
   const [type, setType] = useState('contact');
-  console.log('id', userId);
   const dispatch = useDispatch();
+  const prevLocation = usePrevious(props.location)
   const [companyData, setcompanyData] = useState([]);
   const [value, setValue] = useState('');
+  const [Loading, setLoading] = useState(true)
   const [contactData, setcontactData] = useState([]);
   const [showNameInput, setShowNameInput] = useState(false);
   const [showEmailInput, setShowEmailInput] = useState(false);
@@ -39,15 +50,15 @@ const ContactsManage = (props) => {
   useEffect(() => {
     dispatch(getBlogs());
   }, []); */
-  async function fetchData() {
+  
+  async function fetchEventData() {
     response = await api.get('/contact/viewforuser/' + userId);
     company = await api.get('/company/viewforuser/' + userId);
-    console.log(response);
-    console.log(company);
+ 
     setTable();
   }
   useEffect(() => {
-    fetchData();
+    fetchEventData();
   }, []);
 
   const setTable = () => {
@@ -80,7 +91,17 @@ const ContactsManage = (props) => {
       newtableData.push(data);
       setcompanyData(newtableData);
     });
-    setState({ tableData: contactData });
+    const nav = window.localStorage.getItem('company')
+    if(nav === "true"){
+      setState({ tableData: companyData });
+      setType('company')
+    }else{
+      setState({ tableData: contactData });
+      setType('contact')
+    }
+    setLoading(false)
+    window.localStorage.setItem('company', "false")
+    
   };
 
   //   const handleciSelect = (record) => {
@@ -112,7 +133,7 @@ const ContactsManage = (props) => {
 
   const handleEdit = (record) => {
     //   dispatch(selectBlog(record))
-    console.log(record);
+ 
     if (type === 'contact') {
       props.history.push('/edit/contact', record);
     } else if (type === 'company') {
@@ -121,11 +142,15 @@ const ContactsManage = (props) => {
   };
 
   const handleDelete = (record) => {
-    console.log(record);
+
     if (type === 'contact') {
       api
         .get('/contact/delete/' + record._id)
-        .then(() => notification.success({ message: 'Contact deleted.' }))
+        .then(() =>{
+          //fetchEventData()
+          notification.success({ message: 'Contact deleted.' })
+        }
+        )
         .catch(() => notification.error({ message: 'Failed to delete' }));
     } else if (type === 'company') {
       api
@@ -140,6 +165,7 @@ const ContactsManage = (props) => {
   const FilterByNameInput = (
     <div>
       <SearchOutlined
+      style={{"vertical-align": "revert"}}
         onClick={() => {
           var dump =
             showNameInput === false
@@ -147,10 +173,10 @@ const ContactsManage = (props) => {
               : setShowNameInput(false);
         }}
       />
-      <span> Name </span>
+      <span style={{paddingLeft : "8px"}}> Name </span>
 
       {showNameInput && (
-        <div>
+        <div style={{paddingTop : "10px"}}>
           <input
             placeholder="Search"
             value={value}
@@ -218,7 +244,7 @@ const ContactsManage = (props) => {
 
       render: (text) => (
         <Highlighter
-          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0}}
           searchWords={[value]}
           autoEscape
           textToHighlight={text ? text.toString() : ''}
@@ -268,7 +294,7 @@ const ContactsManage = (props) => {
           okText="Yes"
           cancelText="No"
         >
-          <Button variant="danger">
+          <Button danger>
             Delete
           </Button>
         </Popconfirm>
@@ -279,8 +305,6 @@ const ContactsManage = (props) => {
   ];
 
   const handleView = (i) => {
-    console.log(type);
-    console.log({ i });
     if (type === 'contact') {
       props.history.push('/view/contact', i._id);
     }
@@ -318,7 +342,8 @@ const ContactsManage = (props) => {
     doc.save('contact.pdf');
   };
   return (
-    <Card
+    <Spin size = "large" spinning={Loading}>
+      <Card
       title="Contacts"
       extra={
         <div className="d-flex justify-content-center">
@@ -379,7 +404,9 @@ const ContactsManage = (props) => {
         }}
       ></Table>
     </Card>
-  );
+  
+    </Spin>
+    );
 };
 
 export default ContactsManage;
