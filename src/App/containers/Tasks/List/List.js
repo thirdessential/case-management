@@ -1,8 +1,9 @@
-import { Modal, notification , Button, Popconfirm ,Table} from 'antd';
+import { Modal, notification , Button, Popconfirm ,Table, Spin} from 'antd';
 import React from 'react';
-import Form from './Form'
+import { Form, Row, Col } from 'react-bootstrap';
 import api from '../../../../resources/api';
-
+import EditForm from './editForm'
+import ReactDOM from 'react-dom'
 import {connect} from 'react-redux'
 
 const user = JSON.parse(window.localStorage.getItem('Case.user'))
@@ -19,7 +20,9 @@ class AddList extends React.Component {
       ModalText: 'Content of the modal',
       visible: false,
       confirmLoading: false,
-      editMode : false
+      disabled : false,
+      editMode : false,
+      spinning : true
     }
   }
   componentDidMount(){
@@ -34,10 +37,14 @@ class AddList extends React.Component {
           description : value.decription,
           practiseArea : value.practiseArea,
         }
-        console.log(temp)
+    
         tableData.push(temp)
       })
-      this.setState({tableData : tableData})
+      this.setState({
+        tableData : tableData,
+        spinning : false
+      
+      })
       console.log(this.state.tableData)
     })
     
@@ -48,28 +55,31 @@ class AddList extends React.Component {
     this.setState({
       visible: true,
     });
+    console.log("show modal" + this.state)
+    console.log("showModal " + this.props)
   };
 
   handleOk = () => {
+    
     if(this.state.data.name == ''){
-      notification.warning("Please provide name for the list")
+      notification.warning({message : "Please provide name for the list"})
     }else{
+      let newstate = this.state
+      newstate.disabled = true
+      this.setState(newstate)
+      console.log(newstate)
+      console.log(this.state.disabled)
       if(this.state.editMode){
         const data = this.state.data
         api.post('/tasks/list/edit/'+data.id,data).then((res)=>{
-        
-          
-          let tableData = this.state.tableData
-          tableData[data.key] = data
-          this.setState({tableData : tableData})
-          console.log(this.state.tableData)
-          
+  
          this.setState({data :  {
               userId : user.token.user._id
             },
             name : '',
             editMode : false
           })
+          this.componentDidMount()
           notification.success({message : "List Edited Successfully"})
         }).catch((err)=>{
           notification.error({message : "Failed"})
@@ -77,43 +87,51 @@ class AddList extends React.Component {
         this.setState({
           ModalText: 'The modal will be closed after two seconds',
           confirmLoading: true,
+    
         });
   
       }else {
+
         api.post('/tasks/list/create',this.state.data).then((res)=>{
-          let tableData = this.state.tableData
-          console.log(tableData)
-          tableData.push(this.state.data)
-          this.setState({tableData : tableData})
-          console.log(this.state.tableData)
+          this.setState({
+            data : {
+              userId : user.token.user._id,
+              name : '',
+            }
+          })
+          this.componentDidMount()
           notification.success({message : "List created Successfully"})
         }).catch((err)=>{
           console.log(err)
           notification.error({message : "Failed"})
+        }).then(()=>{
+          ReactDOM.findDOMNode(this.messageForm).reset()
         })
         this.setState({
           ModalText: 'The modal will be closed after two seconds',
           confirmLoading: true,
+        
         });
     
       }
       
           setTimeout(() => {
-        window.location.reload()
+        //window.location.reload()
         this.setState({
           visible: false,
+          disabled : false,
           confirmLoading: false,
         });
       }, 1200);
-  
+      console.log(this.state.disabled)
     }
+   
   };
 
   handleCancel = () => {
     console.log('Clicked cancel button');
     const newstate = this.state
-    delete newstate.data
-    delete newstate.editMode
+   
     newstate.data = {
       userId : user.token.user._id,
       name : '',
@@ -122,9 +140,8 @@ class AddList extends React.Component {
     newstate.editMode = false
     this.setState(newstate);
     console.log(this.state.data)
-    setTimeout(()=>{
-      window.location.reload()
-    }, 600) 
+    
+    
   };
 
  
@@ -189,49 +206,23 @@ class AddList extends React.Component {
     const handleEdit = (record) => {
 
       console.log(record)
-      this.setState({editMode : true, data : record , visible : true})
-    
-      /*
-     
-      if (type === 'contact') {
-        props.history.push('/edit/contact', record);
-      } else if (type === 'company') {
-        props.history.push('/edit/company', record);
-      }
-      */
+      this.setState({editMode : true, data : record })
+ 
     };
   
     const handleDelete = (record) => {
       api
           .get('/tasks/list/delete/' + record.id)
           .then((res) => {
+            this.componentDidMount()
             notification.success({ message: 'List deleted.' })
-            let tableData = this.state.tableData
-            tableData.splice(record.key , 1)
-            this.setState({tableData : tableData})
-            console.log(this.state.tableData)
+          
           })
           .catch(() => notification.error({ message: 'Failed to delete' }));
           setTimeout(() => {
-            window.location.reload();
+            //window.location.reload();
           }, 1000);
-      /*
-    
-      if (type === 'contact') {
-        api
-          .get('/contact/delete/' + record._id)
-          .then(() => notification.success({ message: 'Contact deleted.' }))
-          .catch(() => notification.error({ message: 'Failed to delete' }));
-      } else if (type === 'company') {
-        api
-          .get('/company/delete/' + record._id)
-          .then(() => notification.success({ message: 'Company deleted.' }))
-          .catch(() => notification.error({ message: 'Failed to delete' }));
-      }
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      */
+     
     };
     const { visible, confirmLoading } = this.state;
     const handleChange = (e) =>{
@@ -244,7 +235,8 @@ class AddList extends React.Component {
     
 
     return (
-      <div >
+      <Spin size="large" spinning = {this.state.spinning}>
+        <div >
         <div>
           <Button
             onClick={this.showModal}
@@ -263,12 +255,80 @@ class AddList extends React.Component {
             <Button  onClick={this.handleCancel}>
               Cancel
             </Button>,
-            <Button type="primary"  onClick={this.handleOk}>
-              Submit
+            <Button type="primary" disabled={this.state.disabled} onClick={this.handleOk}>
+              Create List
             </Button>,
           ]}
         >
-          <Form editMode = {this.state.editMode} record = {this.state.data} handleChange = {handleChange} ></Form>
+            <Form
+            id='myForm'
+            className="form"
+            ref={ form => this.messageForm = form }>
+                <Form.Group controlId="formBasicEmail">
+                  <Form.Label>Name</Form.Label>
+                  <Form.Control 
+                  type="text" 
+                  placeholder="Name"
+                  name="name"
+                  onChange={handleChange} />
+                </Form.Group>
+            
+                <Form.Group controlId="formBasicPassword">
+                  <Form.Label>Descripton</Form.Label>
+                  <Form.Control 
+                  type="text" 
+                  placeholder="Description" 
+                  onChange={handleChange}
+                  name="decription"/>
+                </Form.Group>
+                <Form.Group controlId="exampleForm.ControlSelect1">
+                  <Form.Label>Practice Area</Form.Label>
+                  <Form.Control 
+                  as="select"
+                  onChange={handleChange}
+                  name="practiseArea"
+                  >
+                      <option>Select a practice area</option>
+                      <option>Attorney</option>
+                      <option>Administrative</option>
+                      <option>Bankruptcy</option>
+                      <option>Business</option>
+                      <option>Builder's Liens</option>
+                      <option>Civil Litigation</option>
+                      <option>Commercial</option>
+                      <option>Conveyance (Purchase)</option>
+                      <option>Conveyance (Sale)</option>
+                      <option>Corporate</option>
+                      <option>Criminal</option>
+                      <option>Employment</option>
+                      <option>Estates</option>
+                      <option>Family</option>
+                      <option>Immigration</option>
+                      <option>Insurance</option>
+                      <option>Personal Injury</option>
+                      <option>Tax</option>
+                      <option>Wills</option>
+                  </Form.Control>
+                </Form.Group>
+              </Form>
+        </Modal>
+        <Modal
+          title="Edit List"
+          visible={this.state.editMode}
+          onOk={this.handleOk}
+          confirmLoading={confirmLoading}
+          onCancel={this.handleCancel}
+          footer={[
+            <Button  onClick={this.handleCancel}>
+              Cancel
+            </Button>,
+            <Button type="primary" onClick={this.handleOk}>
+              Update List
+            </Button>,
+          ]}
+        >
+          <EditForm record = {this.state.data} handleChange = {handleChange}></EditForm>
+
         </Modal>
 
         <Table
@@ -284,7 +344,9 @@ class AddList extends React.Component {
         }}
       ></Table>
       </div>
-    );
+    
+      </Spin>
+      );
   }
 }
 
