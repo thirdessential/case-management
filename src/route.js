@@ -14,12 +14,20 @@ const BlogCard = React.lazy(()=>import('./App/containers/Auth/blogcard'))
 const BlogPage = React.lazy(()=>import('./App/containers/Auth/blogpage'))
 const Features = React.lazy(()=>import('./App/containers/Auth/features'))
 const Contact = React.lazy(()=>import('./App/containers/Auth/contactus'))
+const AboutUs = React.lazy(()=>import('./App/containers/Auth/aboutus'))
 const Subscription = React.lazy(()=>import('./App/containers/Auth/subscription'))
 const AdminRegister = React.lazy(() => import('./Demo/Authentication/SignUp/SignUp1'));
 const AdminLogin = React.lazy(() => import('./Demo/Authentication/SignIn/SignIn1'));
+const SubscriptionPage = React.lazy(() => import('./App/containers/Subscription/Subscription'));
 
 const route = [
     { path: '/', exact: true, name: 'HomePage', component: HomePage },
+    {
+      path: '/plans/subscription',
+      exact: true,
+      name: 'subscription',
+      component: SubscriptionPage,
+    },
     { path: '/login', exact: true, name: 'Login', component: LoginPage },
     { path: '/registration', exact: true, name: 'Registration', component: Registration },
     { path: '/forgot', exact: true, name: 'Forgot', component: ForgotPass },
@@ -28,6 +36,7 @@ const route = [
     { path: '/blogpage', exact: false, name: 'Signin 1', component: BlogPage },
     { path: '/features', exact: true, name: 'Signin 1', component: Features },
     { path: '/contact', exact: true, name: 'Signin 1', component: Contact },
+    { path: '/AboutUs', exact: true, name: 'Signin 1', component: AboutUs },
     { path: '/subscription', exact: true, name: 'Signin 1', component: Subscription },
     { path: '/admin', exact: true, name: 'Signin 1', component: AdminLogin },
     { path: '/admin/register', exact: true, name: 'Signin 1', component: AdminRegister },
