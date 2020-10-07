@@ -61,8 +61,16 @@ export const navigation = {
               icon: 'feather icon-codepen',
               url: '/manage/plans',
             },
+            {
+              id: 'Home',
+              title: 'Home',
+              type: 'item',
+              icon: 'feather icon-users',
+              url: '/manage/footer',
+            },
           ],
         },
+        /*
         {
           id: 'contactmanage',
           title: 'Manage Contacts',
@@ -70,6 +78,7 @@ export const navigation = {
           icon: 'feather icon-mail',
           url: '/manage/contacts',
         },
+        */
 
         {
           id: 'logout',
@@ -91,13 +100,7 @@ export default {
       type: 'group',
       icon: 'icon-navigation',
       children: [
-        {
-          id: 'profile',
-          title: 'Profile',
-          type: 'item',
-          icon: 'feather icon-user',
-          url: '/profile',
-        },
+        
         {
           id: 'dashboard',
           title: 'Dashboard',
@@ -168,6 +171,7 @@ export default {
           icon: 'feather icon-phone-call',
           url: '/manage/communication',
         },
+        /*
         {
           id: 'reports',
           title: 'Reports',
@@ -175,6 +179,7 @@ export default {
           icon: 'feather icon-book',
           url: '/',
         },
+        */
         {
           id: 'settings',
           title: 'Settings',
@@ -184,10 +189,17 @@ export default {
         },
         {
           id: 'help',
-          title: 'Help centre',
+          title: 'Support',
           type: 'item',
           icon: 'feather icon-help-circle',
           url: '/help',
+        },
+        {
+          id: 'profile',
+          title: 'Profile',
+          type: 'item',
+          icon: 'feather icon-user',
+          url: '/profile',
         },
         {
           id: 'logout',
