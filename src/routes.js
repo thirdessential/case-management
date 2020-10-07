@@ -11,6 +11,7 @@ import BlogsManage from './App/containers/ContentManagement/Blogs';
 import AddEditBlogs from './App/components/ContentManagePartials/AddEditBlog';
 import AddEditFeatures from './App/components/ContentManagePartials/AddEditFeature';
 import AddEditPlans from './App/components/ContentManagePartials/AddEditPlan';
+import footer from './App/containers/ContentManagement/footer/footer'
 import Accounts from './App/containers/Accounts';
 import Documents from './App/containers/Documents';
 import Support from './App/containers/Support/Support';
@@ -26,6 +27,7 @@ window.$ = $;
 global.jQuery = $;
 
 const DashboardDefault = React.lazy(() => import('./Demo/Dashboard/Default'));
+const SubscriptionPage = React.lazy(() => import('./App/containers/Subscription/Subscription'));
 
 const UIBasicButton = React.lazy(() =>
   import('./Demo/UIElements/Basic/Button')
@@ -96,6 +98,7 @@ const AddMatter = React.lazy(() =>
   import('./App/components/AddEditMatter/AddMatter')
 );
 const Invoice = React.lazy(() => import('./App/components/Invoice/Invoice'));
+const SubscriptonInvoice = React.lazy(() => import('./App/containers/SubscriptionManagement/Invoice'));
 const EditMatter = React.lazy(() =>
   import('./App/components/AddEditMatter/EditMatter')
 );
@@ -129,6 +132,9 @@ const profile = React.lazy(() =>
 );
 const viewTicket = React.lazy(() =>
   import('./App/containers/SupportManagement/ViewTicket/view')
+);
+const viewFolder = React.lazy(() =>
+  import('./App/containers/Documents/ViewFolder')
 );
 
 const viewSubscription = React.lazy(()=>import('./App/containers/SubscriptionManagement/ViewTicket/view'))
@@ -187,6 +193,7 @@ export const adminRoutes = [
     name: 'Manage Features',
     component: FeaturesManage,
   },
+  
   {
     path: '/manage/plans',
     exact: true,
@@ -212,10 +219,22 @@ export const adminRoutes = [
     component: AddEditPlans,
   },
   {
+    path: '/manage/footer',
+    exact: true,
+    name: 'Add Edit footer',
+    component: footer,
+  },
+  {
     path: '/manage/subscription',
     exact: true,
     name: 'Manage Subscription',
     component: SubscriptionManagement,
+  },
+  {
+    path: '/subscription/invoice',
+    exact: true,
+    name: 'Subscription Invoice',
+    component: SubscriptonInvoice,
   },
   {
     path: '/view/subscription',
@@ -250,6 +269,7 @@ const routes = [
     name: 'Default',
     component: DashboardDefault,
   },
+  
   { path: '/tasks', exact: true, name: 'Tasks', component: tasks },
   { path: '/tasks/view/list', exact: true, name: 'View List', component: list },
   { path: '/profile', exact: true, name: 'Profile', component: Profile },
@@ -264,6 +284,18 @@ const routes = [
     exact: true,
     name: 'Basic Badges',
     component: UIBasicBadges,
+  },
+  {
+    path: '/plans/subscription',
+    exact: true,
+    name: 'subscription',
+    component: SubscriptionPage,
+  },
+  {
+    path: '/documents/view',
+    exact: true,
+    name: 'View Folder',
+    component: viewFolder,
   },
   {
     path: '/basic/breadcrumb-paging',
@@ -388,6 +420,7 @@ const routes = [
     name: 'Invoice',
     component: Invoice,
   },
+ 
   { path: '/settings', exact: true, name: 'Settings', component: Settings },
   {
     path: '/settings/customFeilds',
