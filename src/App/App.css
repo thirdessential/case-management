@@ -952,18 +952,149 @@ label {
   color: #55656d;
   font-size: 14px;
 }
+.serach-top-my{
+  width: 200%;
+}
+
+.title-component-header{
+  background: #fff;
+  padding: 5px 9px;
+  justify-content: space-between;
+  border: 1px solid #f0f0f0;
+}
+.title-header-name{
+  padding: 5px 10px 5px 0px;
+}
+
+.title-header-name h5{
+  font-weight: 700;
+}
+.extra-iteam-div{
+  justify-content: space-evenly;
+}
+.excel-button {
+  width: 95%;
+  height: 90%;
+}
+.ant-table-thead > tr > th {
+  vertical-align: baseline;
+  min-width: 126px;
+}
+.ant-table-tbody > tr > td {
+  word-break: break-all;
+}
+
+.short-activity-botton {
+  margin-left: 0.5rem;
+  margin-top: 1rem;
+}
 
 @media (max-width: 768px) {
   #about img {
     margin: 50px 0;
+  }
+  .matter-res-date{
+    flex-direction: column;
+  }
+
+  .title-header-name{
+    margin: auto;
   }
 
   #footer .ftr-set h3 {
     /* color: #fff; */
     margin-bottom: 10px;
   }
+
+  .nav-res-flex{
+    flex-direction: column;
+  }
+  .serach-top-my{
+    width: fit-content;
+  }
+}
+.bell-padding{
+  position: "relative";
+  top : -4px; 
+  padding-right: 20px; 
+  padding-left: 5px;
 }
 /*# sourceMappingURL=App.css.map */
 
 @media (max-width: 576px) {
+  .title-component-header{
+    flex-direction: column;
+  }
+  .give-box-direction {
+    flex-direction: column;
+  }
+  .bell-padding{
+    padding-right: 5px !important;
+    padding-left: 0px !important;
+  }
+  .btn-sm {
+    padding: 2px 8px !important;
+    font-size: 12px !important;
+  }
+  
+}
+
+@media (max-width: 410px) {
+  .date-activity-res{
+    flex-direction: column;
+    margin-top: 5px;
+  }
+  .short-activity-botton{
+    margin-left: 0px;
+    margin-top: 1px;
+  }
+}
+
+@media (max-width: 390px) { 
+  .extra-iteam-div{
+    flex-direction: column;
+  }
+  .excel-button {
+    width: 97%;
+  }
+  .matter-amount span {
+    font-size: 17px;
+  }
+}
+@media only screen and (max-width: 660px) and (min-width: 570px)  {
+.title-component-header{
+  flex-direction: column;
+}
+}
+
+.table-responsive tr {
+  cursor: pointer;
+}
+
+a{
+  cursor: pointer;
+}
+
+.blogpage-image {
+  object-fit: contain;
+  width: 100%;
+  margin: auto;
+  height: 180px;
+  padding-top: 8px;
+}
+.blogcard-box{
+  height: 100%;
+}
+
+.cardblogtitle {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+}
+.cardblogdescription{
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
 }
