@@ -64,7 +64,9 @@ class newPerson extends React.Component {
       valid: false,
       visible: false,
       fileList: [],
-      disable : false
+      billingPaymentProfile : "default",
+      disable : false,
+      user: ""
     };
   }
 
@@ -74,12 +76,18 @@ class newPerson extends React.Component {
     customData[id] = { [name]: value };
   }
   async componentDidMount() {
+    let user = JSON.parse(window.localStorage.getItem('Case.user'))
+    user = user.token.user
+    console.log(user)
+    this.setState({
+      user : user.firstName + " " + user.lastName
+    })
     response = await api.get('/company/viewforuser/' + this.props.userId);
 
     options = response.data.data.map((value, id) => {
       return <option key={id}>{value.name}</option>;
     });
-    feilds = await api.get('/user/view/5eecb08eaec6f1001765f8d5');
+    feilds = await api.get('/user/view/' + this.props.userId);
 
     customFields = feilds.data.data.customFields.map((value, index) => {
       return (
@@ -167,6 +175,7 @@ class newPerson extends React.Component {
         //  dispatch(updateBlog({id:this.state._id,body:this.state}))
       } else {
         api.post('contact/create', data).then((result) => {
+          console.log(result)
           notification.success({message : "Contact created"})
           this.setState({ visible: true });
           const key = 'updatingDetails';
@@ -403,23 +412,25 @@ class newPerson extends React.Component {
       }
       console.log(list)
       this.setState(list);
-      if (name === 'emailAddress')
-        switch (name) {
-          case 'emailAddress':
-            errors.Email[id] = validEmailRegex.test(value)
-              ? ''
-              : 'Email is not valid!';
-            break;
-          case 'phone':
-            errors.phone[id] =
-              value.length < 10 || value.length > 13
-                ? 'phone number must be between 10 and 13 digits'
-                : '';
-            break;
-
-          default:
-            break;
-        }
+        if (tagName !== 'SELECT') {
+          switch (name) {
+            case 'emailAddress':
+              errors.Email[id] = validEmailRegex.test(value)
+                ? ''
+                : 'Email is not valid!';
+              break;
+            case 'phone':
+              errors.phone[id] =
+                value.length < 10 || value.length > 13
+                  ? 'phone number must be between 10 and 13 digits'
+                  : '';
+              break;
+  
+            default:
+              break;
+          }
+      }
+        
     };
 
     const addFeild = (type) => {
@@ -562,7 +573,7 @@ class newPerson extends React.Component {
               <h4>Personal Details</h4>
               <div className="form-header-container mb-4">
                 <Form.Row>
-                  <Col md="2">
+                  <Col sm>
                     <Form.Group controlId="formGroupPrefix">
                       <Form.Label>Prefix</Form.Label>
                       <select
@@ -583,7 +594,7 @@ class newPerson extends React.Component {
                     </Form.Group>
                     <p className="help-block text-danger">{error.Prefix}</p>
                   </Col>
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupFirstName">
                       <Form.Label>First Name</Form.Label>
                       <Form.Control
@@ -598,7 +609,7 @@ class newPerson extends React.Component {
                     <p className="help-block text-danger">{error.FirstName}</p>
                   </Col>
 
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupMiddleName">
                       <Form.Label>Middle Name</Form.Label>
                       <Form.Control
@@ -611,7 +622,7 @@ class newPerson extends React.Component {
                     </Form.Group>
                     <p className="help-block text-danger">{error.MiddleName}</p>
                   </Col>
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupLastName">
                       <Form.Label>Last Name</Form.Label>
                       <Form.Control
@@ -630,7 +641,7 @@ class newPerson extends React.Component {
                   <Col>{imageUpload}</Col>
                 </Form.Row>
                 <Form.Row>
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupCompany">
                       <Form.Label>Company</Form.Label>
                       <Form.Control
@@ -643,7 +654,7 @@ class newPerson extends React.Component {
                       </Form.Control>
                     </Form.Group>
                   </Col>
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupTitle">
                       <Form.Label>Title</Form.Label>
                       <Form.Control
@@ -715,7 +726,7 @@ class newPerson extends React.Component {
                   return (
                     <div className="mb-3">
                       <Form.Row>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>Type</Form.Label>
                             <Form.Control
@@ -731,7 +742,7 @@ class newPerson extends React.Component {
                             {errors.Type}
                           </p>
                         </Col>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>Street</Form.Label>
                             <Form.Control
@@ -747,7 +758,7 @@ class newPerson extends React.Component {
                         </Col>
                       </Form.Row>
                       <Form.Row>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>City</Form.Label>
                             <Form.Control
@@ -761,7 +772,7 @@ class newPerson extends React.Component {
                             {errors.City[index]}
                           </p>
                         </Col>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>State</Form.Label>
                             <Form.Control
@@ -777,7 +788,7 @@ class newPerson extends React.Component {
                         </Col>
                       </Form.Row>
                       <Row>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>ZipCode</Form.Label>
                             <Form.Control
@@ -1191,9 +1202,10 @@ class newPerson extends React.Component {
                     <Form.Label>Payment profile</Form.Label>
                     <Form.Control
                       as="select"
+                      name = "billingPaymentProfile"
                       name="Payment profile"
                       //defaultValue={this.props.record[idx]}
-                      //onChange={this.props.change}
+                      onChange={handleChange}
                     >
                       <option>default</option>
                     </Form.Control>
@@ -1205,18 +1217,26 @@ class newPerson extends React.Component {
               <Row>
                 <Col md="3">
                   <Form.Group>
-                    <Form.Label>Firm user or group</Form.Label>
+                    <Form.Label>Firm user</Form.Label>
                     <Form.Control
+                      name = "billingPaymentProfile"
                       as="select"
                       //defaultValue={this.props.record[idx]}
-                      //onChange={this.props.change}
-                    ></Form.Control>
+                      onChange={handleChange}
+                    >
+                      <option>{this.state.user}</option>
+
+                    </Form.Control>
                   </Form.Group>
                 </Col>
                 <Col md="3">
                   <Form.Group>
                     <Form.Label>Rate</Form.Label>
-                    <Form.Control name="rate" type="text" placeholder="$0.0" />
+                    <Form.Control 
+                      name="billingCustomRate" 
+                      type="number" 
+                      onChange={handleChange}
+                      placeholder="$0.0" />
                   </Form.Group>
                 </Col>
               </Row>
@@ -1225,9 +1245,10 @@ class newPerson extends React.Component {
                   <Form.Group>
                     <Form.Label>ClientID</Form.Label>
                     <Form.Control
-                      name="clientId"
+                      name="billingClientId"
                       type="text"
                       placeholder="ClientID"
+                      onChange={handleChange}
                     />
                   </Form.Group>
                 </Col>
