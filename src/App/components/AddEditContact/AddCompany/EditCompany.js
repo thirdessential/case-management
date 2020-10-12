@@ -50,11 +50,18 @@ class editCompany extends React.Component {
       website: [],
       editData: '',
       employees: [],
-      optionsss : null
+      optionsss : null,
+      billingPaymentProfile : "default"
     };
   }
   
   componentDidMount() {
+    let user = JSON.parse(window.localStorage.getItem('Case.user'))
+    user = user.token.user
+    console.log(user)
+    this.setState({
+      user : user.firstName + " " + user.lastName
+    })
     api.get(
       '/company/view/' + this.props.location.state._id
     ).then((editData)=>{
@@ -74,8 +81,8 @@ class editCompany extends React.Component {
       console.log(res.data.data)
       contacts = res.data.data
       optionsss = res.data.data.map((value, index)=>{
-          return <option id={index}>{value.firstName}</option>
-         })
+        return <option value={value._id}>{value.firstName + " " + value.lastName}</option>
+      })
       this.setState({optionsss : optionsss})
     }).catch((err)=>{
       console.log(err)
@@ -255,41 +262,39 @@ class editCompany extends React.Component {
     const handleMultipleChange = (e) => {
       e.persist();
       let list = this.state;
-      console.log(e)
-      const { name, id, value, tagName, selectedIndex } = e.target;
-      if(name == "employees"){
-       if(selectedIndex != 0){
-        list.employees[id] = contacts[selectedIndex - 1]._id
-       }
+      const { name, id, value, tagName } = e.target;
+      if(name === "employees"){
+        list[name][id] = value
       }else{
-        if (tagName === 'SELECT' && name != "employees") {
+        if (tagName === 'SELECT') {
           name === 'emailAddress'
             ? (list[name][id][`emailType`] = value)
             : (list[name][id][`${name}Type`] = value);
         } else {
           list[name][id][name] = value;
         }
+        console.log(list)
+        this.setState(list);
+          if (tagName !== 'SELECT') {
+            switch (name) {
+              case 'emailAddress':
+                errors.Email[id] = validEmailRegex.test(value)
+                  ? ''
+                  : 'Email is not valid!';
+                break;
+              case 'phone':
+                errors.phone[id] =
+                  value.length < 10 || value.length > 13
+                    ? 'phone number must be between 10 and 13 digits'
+                    : '';
+                break;
+    
+              default:
+                break;
+            }
+        }
       }
-     
-      this.setState(list);
-
-      switch (name) {
-        case 'emailAddress':
-          errors.Email[id] = validEmailRegex.test(this.state.emailAddress[id].emailAddress)
-            ? ''
-            : 'Email is not valid!';
-          break;
-
-        case 'phone':
-          errors.phone[id] =
-            value.length < 10 || value.length > 13
-              ? 'phone number must be between 10 and 13 digits'
-              : '';
-          break;
-
-        default:
-          break;
-      }
+        
     };
 
     const handleImageChange = (e) => {
@@ -351,7 +356,7 @@ class editCompany extends React.Component {
           <div className="card p-4">
             <Form className="form-details" onSubmit={this.handleSubmit}>
               <div className="form-header-container mb-4">
-                <h3 className="form-header-text">Add company</h3>
+                <h3 className="form-header-text">Update company</h3>
               </div>
               <Upload {...imageHandler} onChange={handleImageChange}>
                 <antdButton className="form-upload-button">
@@ -374,8 +379,6 @@ class editCompany extends React.Component {
                   </Form.Group>
                   <p className="help-block text-danger">{error.FirstName}</p>
                 </Col>
-                <Col></Col>
-                <Col></Col>
               </Form.Row>
 
               <DynamicFeilds
@@ -444,7 +447,7 @@ class editCompany extends React.Component {
                 return (
                   <div className="mb-3">
                     <Form.Row>
-                      <Col>
+                      <Col sm>
                         <Form.Group controlId={index}>
                           <Form.Label>Type</Form.Label>
                           <Form.Control
@@ -461,7 +464,7 @@ class editCompany extends React.Component {
                         </Form.Group>
                         <p className="help-block text-danger">{errors.Type}</p>
                       </Col>
-                      <Col>
+                      <Col sm>
                         <Form.Group controlId={index}>
                           <Form.Label>Street</Form.Label>
                           <Form.Control
@@ -479,7 +482,7 @@ class editCompany extends React.Component {
                       </Col>
                     </Form.Row>
                     <Form.Row>
-                      <Col>
+                      <Col sm>
                         <Form.Group controlId={index}>
                           <Form.Label>City</Form.Label>
                           <Form.Control
@@ -495,7 +498,7 @@ class editCompany extends React.Component {
                           {errors.City[index]}
                         </p>
                       </Col>
-                      <Col>
+                      <Col sm>
                         <Form.Group controlId={index}>
                           <Form.Label>State</Form.Label>
                           <Form.Control
@@ -513,7 +516,7 @@ class editCompany extends React.Component {
                       </Col>
                     </Form.Row>
                     <Form.Row>
-                      <Col>
+                      <Col sm>
                         <Form.Group controlId={index}>
                           <Form.Label>ZipCode</Form.Label>
                           <Form.Control
@@ -529,7 +532,7 @@ class editCompany extends React.Component {
                           {errors.ZipCode[index]}
                         </p>
                       </Col>
-                      <Col>
+                      <Col sm>
                         <Form.Group controlId={index}>
                           <Form.Label>Country</Form.Label>
                           <select
@@ -889,6 +892,7 @@ class editCompany extends React.Component {
                 <br></br>
                 {
                   this.state.employees.map((val, index)=>{
+                    console.log(this.state.editData)
                     return <div >
           
                       <Row>
@@ -900,7 +904,7 @@ class editCompany extends React.Component {
                             name="employees"
                             defaultValue={this.state.editData.employees ? this.state.editData.employees[index] : ""}
                             onClick = {handleMultipleChange}
-                            //defaultValue={this.props.record[idx]}
+                           // defaultValue={this.state.editData[idx]}
                             //onChange={this.props.change}
                           >
                             <option>Select a contact</option>
@@ -934,30 +938,38 @@ class editCompany extends React.Component {
                       as="select"
                       name="Payment profile"
                       //defaultValue={this.props.record[idx]}
-                      //onChange={this.props.change}
+                      onChange={handleChange}
                     >
                       <option>default</option>
                     </Form.Control>
                   </Form.Group>
                 </Col>
               </Row>
-                          
+
               <p>Hourly billing</p>
               <Row>
                 <Col md="3">
                   <Form.Group>
-                    <Form.Label>Firm user or group</Form.Label>
+                    <Form.Label>Firm user</Form.Label>
                     <Form.Control
+                      name = "billingPaymentProfile"
                       as="select"
                       //defaultValue={this.props.record[idx]}
-                      //onChange={this.props.change}
-                    ></Form.Control>
+                      onChange={handleChange}
+                    >
+                      <option>{this.state.user}</option>
+
+                    </Form.Control>
                   </Form.Group>
                 </Col>
                 <Col md="3">
                   <Form.Group>
                     <Form.Label>Rate</Form.Label>
-                    <Form.Control name="rate" type="text" placeholder="$0.0" />
+                    <Form.Control 
+                      name="billingCustomRate" 
+                      type="number" 
+                      onChange={handleChange}
+                      placeholder="$0.0" />
                   </Form.Group>
                 </Col>
               </Row>
@@ -966,9 +978,10 @@ class editCompany extends React.Component {
                   <Form.Group>
                     <Form.Label>ClientID</Form.Label>
                     <Form.Control
-                      name="clientId"
+                      name="billingClientId"
                       type="text"
                       placeholder="ClientID"
+                      onChange={handleChange}
                     />
                   </Form.Group>
                 </Col>
