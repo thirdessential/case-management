@@ -13,6 +13,7 @@ const EditAccount = (props) =>{
 
     const history = useHistory()
     const userId = useSelector((state) => state.user.token.user._id);
+    const [firstTrue, setfirstTrue] = useState(false)
     const [state, setState] = useState({
         userId : userId,
         type: "",
@@ -28,13 +29,20 @@ const EditAccount = (props) =>{
     })
     const [error, setError] = useState({})
     const [display, setDisplay] = useState(false)
-
+    const [Disabled, setDisabled] = useState(false)
     // get Account Data
     useEffect(() => {
         api
         .get("/account/view/"+props.location.state)
         .then((res) => {
+            let newState = state
+            newState.defaultAccount = res.data.data.defaultAccount
+            if(newState.defaultAccount){
+                setfirstTrue(true)
+            }
+            setState(newState)
             setState({...state, ...res.data.data})
+            console.log(state)
         })
         .catch((err) => {
           console.log(err); 
@@ -47,6 +55,12 @@ const EditAccount = (props) =>{
         e.persist();
         setDisplay(false)
         const {name, value} = e.target;
+        console.log("chnage")
+        if(name === "defaultAccount"){
+            let data = state
+            data.defaultAccount = data.defaultAccount ? false : true
+            setState(data)
+        }else{
         let errors = error
         switch (name) {
             case "type":
@@ -116,11 +130,15 @@ const EditAccount = (props) =>{
         }
         setError( (st) => ({...st, ...errors }))
         setState( (st) => ({...st, [name] : value }));
+        
+        }
+        console.log(state.defaultAccount)
     }
 
     // handel Submit of form 
     const handelSubmit = e =>{
         e.preventDefault();
+        notification.destroy()
         if(!display){
           const validateForm = (error) => {
             let valid = true;
@@ -147,13 +165,23 @@ const EditAccount = (props) =>{
           });
         } else {
             // if form is valid then do something
+            setDisabled(true)
+            /*
+            if(firstTrue){
+                let newState = state
+                newState.defaultAccount = !newState.defaultAccount
+                setState(newState)
+            }
+            */
             api.post("/account/edit/"+props.location.state, state)
                 .then((res) => {
                     console.log(res)
+                    setDisabled(false)
                     notification.success({message : "Account Edited."})
                     history.goBack();
                 }).catch((err) => {
                     console.log(err); 
+                    setDisabled(false)
                     notification.error({message : "Failed to edit account."})
                   });
         }
@@ -220,14 +248,14 @@ const EditAccount = (props) =>{
                         <p className="help-block text-danger">{error.swiftCode}</p>
                     </Form.Group>
                     <Form.Row>
-                        <Col>
+                        <Col sm>
                             <Form.Group controlId="transitNumber">
                                 <Form.Label>Transit Number</Form.Label>
                                 <Form.Control type="text" name="transitNumber" placeholder="Transit Number" value={state["transitNumber"]} onChange={handelChange}/>
                                 <p className="help-block text-danger">{error.transitNumber}</p>
                             </Form.Group>
                         </Col>
-                        <Col>
+                        <Col sm>
                             <Form.Group controlId="currency">
                                 <Form.Label>Currency</Form.Label>
                                 <Form.Control
@@ -252,10 +280,10 @@ const EditAccount = (props) =>{
                     </Form.Group>
 
                     <Form.Group controlId="defaultAccount">
-                        <Form.Check type="checkbox" name="defaultAccount" label="Set the account as default account" onChange={handelChange} />
+                        <Form.Check defaultChecked = { state.defaultAccount } type="checkbox" name="defaultAccount" label="Set the account as default account" onChange={handelChange} />
                     </Form.Group>
                     <br /><br />
-                    <Button onClick={handelSubmit}>Edit Bank Account</Button>
+                    <Button disabled = {Disabled} onClick={handelSubmit}>Edit Bank Account</Button>
                 </Form>
             </Card>
         </div>          
