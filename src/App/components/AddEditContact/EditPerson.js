@@ -24,9 +24,7 @@ const validUrlRegex = RegExp(
 let editMode = true;
 let options = null;
 let response = {};
-let feilds = {};
 let customData = [];
-let customFields = null;
 let res = '';
 let error = {
   FirstName: '',
@@ -67,7 +65,9 @@ class editPerson extends React.Component {
       editData: '',
       fileList: [],
       prefixx : "",
-      companyy : ""
+      companyy : "",
+      billingPaymentProfile : "default",
+      customFeilds : []
     };
   }
 
@@ -99,17 +99,22 @@ class editPerson extends React.Component {
     }
   };
    componentDidMount() {
+    let user = JSON.parse(window.localStorage.getItem('Case.user'))
+    user = user.token.user
+
+    this.setState({
+      user : user.firstName + " " + user.lastName
+    })
    api.get(
       '/contact/view/' + this.props.location.state._id
     ).then((editData)=>{
-  
+      console.log(editData)
       const preForm = <div>
          <Form.Group controlId="Prefix">
                       <Form.Label>Prefix</Form.Label>
                       <select
                         as="select"
                         name="prefix"
-                    
                         defaultValue = {editData.data.data.prefix}
                         onChange={this.handleChange}
                         style={{ 'border-radius': '5px' }}
@@ -125,7 +130,7 @@ class editPerson extends React.Component {
                     </Form.Group>
                     <p className="help-block text-danger">{error.Prefix}</p>
       </div>
-      console.log(editData.data.data)
+
       const comForm = <div>
         <Form.Group controlId="formGroupCompany">
                       <Form.Label>Company</Form.Label>
@@ -163,8 +168,30 @@ class editPerson extends React.Component {
     });
    })
 
+   
+    api.get('/user/view/' + this.props.userId).then((res)=>{
+      console.log(res)
+      let customFeilds = []
+  
+      res.data.data.customFields.map((value, index)=>{
+          customFeilds.push(<Col md="6">
+          <Form.Group key={index} controlId={index}>
+            <Form.Label>{value.name}</Form.Label>
+            <Form.Control
+              name={value.name}
+              type={value.type}
+              defaultValue={this.state.editData.customFields == undefined  || this.state.editData.customFields.length ==0 ? " " : this.state.editData.customFields[index][value.name]}
+            onChange={this.handleCustom}
+            />
+          </Form.Group>
+        </Col>)
+      })
+      this.setState({
+        customFeilds : customFeilds
+      })
     
-    // feilds = await api.get('/user/view/' + this.props.userId);
+      })
+    
 
     // customFields = feilds.data.data.customFields.map((value, index) => {
     //   let val = '';
@@ -186,7 +213,7 @@ class editPerson extends React.Component {
     //   );
     // });
 
-    this.setState({ customFields, options });
+    this.setState({ options });
 
     {
       /*
@@ -256,7 +283,7 @@ class editPerson extends React.Component {
         api
           .post('/contact/edit/' + this.props.location.state._id, data)
           .then((data) => {
-            console.log(data);
+
             finalres = data.data._id;
             this.setState({ visible: true });
             const key = 'updatingDetails';
@@ -268,13 +295,13 @@ class editPerson extends React.Component {
                 duration: 5,
               });
             };
-            if (dataList.fileList.length !== 0) {
+            if (dataList.fileList && dataList.fileList.length !== 0) {
               openMessage();
               const formData = new FormData();
               dataList.fileList.forEach((file) => {
                 formData.append('image', file);
               });
-              console.log({ data });
+
               api
                 .post('/contact/upload/' + data.data.data._id, formData)
                 .then((res) => {
@@ -451,22 +478,24 @@ class editPerson extends React.Component {
       }
       this.setState(list)
       console.log(this.state)
-      switch (name) {
-        case 'emailAddress':
-          errors.Email[id] = validEmailRegex.test(this.state.emailAddress[id].emailAddress)
-            ? ''
-            : 'Email is not valid!';
-          break;
-        case 'phone':
-          errors.phone[id] =
-            value.length < 10 || value.length > 13
-              ? 'phone number must be between 10 and 13 digits'
-              : '';
-          break;
+      if (tagName !== 'SELECT') {
+        switch (name) {
+          case 'emailAddress':
+            errors.Email[id] = validEmailRegex.test(value)
+              ? ''
+              : 'Email is not valid!';
+            break;
+          case 'phone':
+            errors.phone[id] =
+              value.length < 10 || value.length > 13
+                ? 'phone number must be between 10 and 13 digits'
+                : '';
+            break;
 
-        default:
-          break;
-      }
+          default:
+            break;
+        }
+    }
     };
     const addFeild = (type) => {
       let list = this.state;
@@ -603,15 +632,19 @@ class editPerson extends React.Component {
           <div className="card p-4">
             <Form className="form-details" onSubmit={this.handleSubmit}>
               <div className="form-header-container mb-4">
-                <h3 className="form-header-text">Add New Person</h3>
+                <h3 className="form-header-text">Update Contact</h3>
               </div>
               <h4>Personal Details</h4>
               <div className="form-header-container mb-4">
-                <Row>
-                  <Col xs={7} md="6">
-                  {console.log(this.state.prefix)}
+                <Form.Row>
+                  <Col className="py-3">{imageUpload}</Col>
+                </Form.Row>
+                <Form.Row>
+                  <Col sm>
+                    {console.log(this.state.prefix)}
                     {this.state.prefixx}
-
+                    </Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupFirstName">
                       <Form.Label>First Name</Form.Label>
                       <Form.Control
@@ -624,11 +657,10 @@ class editPerson extends React.Component {
                     </Form.Group>
                     <p className="help-block text-danger">{error.FirstName}</p>
                   </Col>
-                  <Col className="py-3">{imageUpload}</Col>
-                </Row>
+                </Form.Row>
 
                 <Form.Row>
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupMiddleName">
                       <Form.Label>Middle Name</Form.Label>
                       <Form.Control
@@ -640,7 +672,7 @@ class editPerson extends React.Component {
                     </Form.Group>
                     <p className="help-block text-danger">{error.MiddleName}</p>
                   </Col>
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupLastName">
                       <Form.Label>Last Name</Form.Label>
                       <Form.Control
@@ -656,7 +688,7 @@ class editPerson extends React.Component {
                 </Form.Row>
 
                 <Row>
-                  <Col>
+                  <Col sm>
                     {this.state.companyy}
                   </Col>
                 </Row>
@@ -682,7 +714,7 @@ class editPerson extends React.Component {
                   </span>
                 </div>
                 <Row>
-                  <Col>
+                  <Col sm>
                     <Form.Group controlId="formGroupTitle">
                       <Form.Label>Title</Form.Label>
                       <Form.Control
@@ -735,7 +767,7 @@ class editPerson extends React.Component {
                   return (
                     <div className="mb-3">
                       <Form.Row>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>Type</Form.Label>
                             <Form.Control
@@ -754,7 +786,7 @@ class editPerson extends React.Component {
                             {errors.Type}
                           </p>
                         </Col>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>Street</Form.Label>
                             <Form.Control
@@ -772,7 +804,7 @@ class editPerson extends React.Component {
                         </Col>
                       </Form.Row>
                       <Form.Row>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>City</Form.Label>
                             <Form.Control
@@ -788,7 +820,7 @@ class editPerson extends React.Component {
                             {errors.City[index]}
                           </p>
                         </Col>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>State</Form.Label>
                             <Form.Control
@@ -806,7 +838,7 @@ class editPerson extends React.Component {
                         </Col>
                       </Form.Row>
                       <Row>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>ZipCode</Form.Label>
                             <Form.Control
@@ -822,7 +854,7 @@ class editPerson extends React.Component {
                             {errors.ZipCode[index]}
                           </p>
                         </Col>
-                        <Col>
+                        <Col sm>
                           <Form.Group controlId={index}>
                             <Form.Label>Country</Form.Label>
                             <select
@@ -1211,7 +1243,12 @@ class editPerson extends React.Component {
                     Custom Field
                   </Button>
                 </p>
-                {customFields}
+                {
+                  this.state.customFeilds.map((val)=>{
+                    return val
+                  })
+                }
+                
                 <br></br>
               </div>
               <br></br>
@@ -1224,7 +1261,7 @@ class editPerson extends React.Component {
                       as="select"
                       name="Payment profile"
                       //defaultValue={this.props.record[idx]}
-                      //onChange={this.props.change}
+                      onChange={handleChange}
                     >
                       <option>default</option>
                     </Form.Control>
@@ -1236,18 +1273,26 @@ class editPerson extends React.Component {
               <Row>
                 <Col md="3">
                   <Form.Group>
-                    <Form.Label>Firm user or group</Form.Label>
+                    <Form.Label>Firm user</Form.Label>
                     <Form.Control
+                      name = "billingPaymentProfile"
                       as="select"
                       //defaultValue={this.props.record[idx]}
-                      //onChange={this.props.change}
-                    ></Form.Control>
+                      onChange={handleChange}
+                    >
+                      <option>{this.state.user}</option>
+
+                    </Form.Control>
                   </Form.Group>
                 </Col>
                 <Col md="3">
                   <Form.Group>
                     <Form.Label>Rate</Form.Label>
-                    <Form.Control name="rate" type="text" placeholder="$0.0" />
+                    <Form.Control 
+                      name="billingCustomRate" 
+                      type="number" 
+                      onChange={handleChange}
+                      placeholder="$0.0" />
                   </Form.Group>
                 </Col>
               </Row>
@@ -1256,13 +1301,15 @@ class editPerson extends React.Component {
                   <Form.Group>
                     <Form.Label>ClientID</Form.Label>
                     <Form.Control
-                      name="clientId"
+                      name="billingClientId"
                       type="text"
                       placeholder="ClientID"
+                      onChange={handleChange}
                     />
                   </Form.Group>
                 </Col>
               </Row>
+
 
               <Button type="submit" className="btn btn-success">
                 {editMode ? 'Update' : 'Create'}
